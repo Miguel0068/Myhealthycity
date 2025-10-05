@@ -1,146 +1,104 @@
 // === 🌐 Configuración global ===
-const BACKEND_URL = "https://myhealthycity-backend.onrender.com"; // ✅ URL pública de tu backend Flask
+const BACKEND_URL = "https://myhealthycity-backend.onrender.com";
 
-// === 📦 Selección de elementos del DOM ===
+// === Elementos del DOM ===
 const sections = document.querySelectorAll(".menu li");
 const mainContent = document.getElementById("main-content");
 
-// Crear panel dinámico para cargar los módulos (mantiene el dashboard fijo)
-let dynamicPanel = document.createElement("div");
-dynamicPanel.id = "dynamic-panel";
-mainContent.appendChild(dynamicPanel);
+// Función de transición suave
+function transitionContent(html) {
+    mainContent.classList.add("fade-out");
+    setTimeout(() => {
+        mainContent.innerHTML = html;
+        mainContent.classList.remove("fade-out");
+        mainContent.classList.add("fade-in");
+    }, 300);
+}
 
-// === 🧭 Manejo de clics en la barra lateral ===
+// === Navegación dinámica ===
 sections.forEach(item => {
     item.addEventListener("click", async () => {
         const section = item.getAttribute("data-section");
-        dynamicPanel.innerHTML = `<div class="data-card"><h3>${section.toUpperCase()}</h3><p>Cargando...</p></div>`;
 
         // === 🗺️ MAPA URBANO ===
         if (section === "mapa") {
-            dynamicPanel.innerHTML = `
-                <div class="data-card">
-                    <h3>🗺️ Mapa Urbano Interactivo</h3>
-                    <div id="map" style="height: 500px; border-radius: 15px; margin-top: 15px;"></div>
-
-                    <!-- Panel de control del mapa -->
-                    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-                        <button class="map-btn" data-layer="green">🌳 Zonas Verdes</button>
-                        <button class="map-btn" data-layer="pollution">🌫️ Contaminación</button>
-                        <button class="map-btn" data-layer="traffic">🚗 Tráfico</button>
-                        <button class="map-btn" data-layer="reset">🔄 Reset</button>
-                    </div>
+            transitionContent(`
+                <div class="data-card fade-in">
+                    <h3>🗺️ Mapa Urbano</h3>
+                    <div id="map" class="map-container"></div>
                 </div>
-            `;
+            `);
 
-            // Esperar a que el DOM cargue el div del mapa
             setTimeout(() => {
                 const map = L.map('map').setView([0, 0], 13);
-
-                // Capa base (OpenStreetMap)
-                const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 18,
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
 
-                // Geolocalización del usuario
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(pos => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-                        map.setView([lat, lon], 14);
-
-                        // Marcador de ubicación
-                        L.marker([lat, lon])
+                        const { latitude, longitude } = pos.coords;
+                        map.setView([latitude, longitude], 14);
+                        L.marker([latitude, longitude])
                             .addTo(map)
-                            .bindPopup(`<b>Tu ubicación</b><br>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`)
+                            .bindPopup("<b>Tu ubicación</b>")
                             .openPopup();
-                    }, () => alert("⚠️ No se pudo obtener tu ubicación."));
-                }
-
-                // Capas simuladas
-                const greenLayer = L.circle([0, 0], { radius: 200, color: "green", opacity: 0.5 });
-                const pollutionLayer = L.circle([0.01, 0.01], { radius: 300, color: "red", opacity: 0.5 });
-                const trafficLayer = L.polyline([[0,0],[0.01,0.02],[0.02,0.03]], { color: "orange", weight: 5 });
-
-                // Control de botones del mapa
-                document.querySelectorAll(".map-btn").forEach(btn => {
-                    btn.addEventListener("click", () => {
-                        const layer = btn.getAttribute("data-layer");
-
-                        map.eachLayer(l => { if (l !== baseLayer) map.removeLayer(l); }); // limpia
-
-                        switch(layer) {
-                            case "green": greenLayer.addTo(map); break;
-                            case "pollution": pollutionLayer.addTo(map); break;
-                            case "traffic": trafficLayer.addTo(map); break;
-                            case "reset": break; // solo limpiar
-                        }
                     });
-                });
-            }, 300);
+                }
+            }, 400);
         }
 
         // === 🚲 MOVILIDAD ===
         else if (section === "movilidad") {
-            dynamicPanel.innerHTML = `
-                <div class="data-card">
+            transitionContent(`
+                <div class="data-card fade-in">
                     <h3>🚲 Movilidad Sostenible</h3>
-                    <p>Datos en desarrollo. Se integrarán rutas ecológicas y flujo vehicular en tiempo real.</p>
-                    <p>💡 Consejo: Evita horas punta y usa medios alternativos. ¡Tu ciudad respira contigo!</p>
+                    <p>Datos en desarrollo: rutas ecológicas, estaciones de transporte y energía limpia.</p>
                 </div>
-            `;
+            `);
         }
 
         // === 🌫️ CONTAMINACIÓN ===
         else if (section === "contaminacion") {
             try {
-                const response = await fetch(`${BACKEND_URL}/api/data`);
-                const data = await response.json();
-
-                dynamicPanel.innerHTML = `
-                    <div class="data-card">
-                        <h3>🌫️ Datos Ambientales</h3>
+                const res = await fetch(`${BACKEND_URL}/api/data`);
+                const data = await res.json();
+                transitionContent(`
+                    <div class="data-card fade-in">
+                        <h3>🌫️ Contaminación Ambiental</h3>
                         <p><strong>Temperatura:</strong> ${data.info.temperature} °C</p>
                         <p><strong>Calidad del aire:</strong> ${data.info.air_quality}</p>
-                        <p><strong>Tráfico:</strong> ${data.info.traffic_level}</p>
-                        <p style="margin-top:15px;">🧠 Micity recomienda salir con mascarilla si la calidad del aire es baja.</p>
+                        <p><strong>Nivel de tráfico:</strong> ${data.info.traffic_level}</p>
                     </div>
-                `;
-            } catch (error) {
-                dynamicPanel.innerHTML = `
-                    <div class="data-card" style="color:red;">
-                        ❌ Error al conectar con el backend (${BACKEND_URL})
-                    </div>
-                `;
+                `);
+            } catch (e) {
+                transitionContent(`<div class="data-card fade-in">❌ Error al conectar con el servidor</div>`);
             }
         }
 
         // === ⚠️ INCIDENCIAS ===
         else if (section === "incidencias") {
-            dynamicPanel.innerHTML = `
-                <div class="data-card">
+            transitionContent(`
+                <div class="data-card fade-in">
                     <h3>⚠️ Incidencias Urbanas</h3>
-                    <p>Muy pronto podrás reportar baches, basura acumulada o cortes de luz en tu zona.</p>
-                    <p>📍 IA predice focos de congestión basados en reportes previos y tráfico actual.</p>
+                    <p>Próximamente podrás reportar problemas urbanos y recibir predicciones con IA.</p>
                 </div>
-            `;
+            `);
         }
 
-        // === 🤖 MICITY CHATBOT ===
-        else if (section === "micity") {
-            dynamicPanel.innerHTML = `
-                <div class="data-card">
-                    <h3>🤖 Micity Chatbot</h3>
-                    <div id="chat-box" style="height:300px; overflow-y:auto; background:var(--card-bg); border-radius:10px; padding:10px; margin-bottom:10px; border:1px solid var(--border-color);"></div>
+        // === 🤖 AURORA (IA) ===
+        else if (section === "aurora") {
+            transitionContent(`
+                <div class="data-card fade-in">
+                    <h3>🤖 Aurora</h3>
+                    <div id="chat-box" class="chat-box"></div>
                     <div class="chat-input">
-                        <input id="user-input" type="text" placeholder="Escribe tu mensaje..." 
-                            style="width:80%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color);">
-                        <button id="send-btn" 
-                            style="padding:10px 15px; border:none; background:var(--text-color); color:var(--bg-color); border-radius:8px;">Enviar</button>
+                        <input id="user-input" type="text" placeholder="Habla con Aurora..." />
+                        <button id="send-btn">Enviar</button>
                     </div>
                 </div>
-            `;
+            `);
 
             const sendBtn = document.getElementById("send-btn");
             const userInput = document.getElementById("user-input");
@@ -149,7 +107,6 @@ sections.forEach(item => {
             sendBtn.addEventListener("click", async () => {
                 const message = userInput.value.trim();
                 if (!message) return;
-
                 chatBox.innerHTML += `<p><b>Tú:</b> ${message}</p>`;
                 userInput.value = "";
 
@@ -160,10 +117,9 @@ sections.forEach(item => {
                         body: JSON.stringify({ message })
                     });
                     const data = await res.json();
-                    chatBox.innerHTML += `<p><b>Micity:</b> ${data.reply || "No tengo respuesta para eso aún 😅"}</p>`;
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                } catch (err) {
-                    chatBox.innerHTML += `<p style="color:red;">❌ Error al conectar con el servidor (${BACKEND_URL})</p>`;
+                    chatBox.innerHTML += `<p><b>Aurora:</b> ${data.reply}</p>`;
+                } catch {
+                    chatBox.innerHTML += `<p style="color:red;">Error al conectar con Aurora 🌌</p>`;
                 }
             });
         }

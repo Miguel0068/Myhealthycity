@@ -5,39 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Healthy City</title>
 
+    <!-- Fuente formal y moderna -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
     <!-- Estilos -->
     <link rel="stylesheet" href="styles/style.css">
 
-    <!-- Leaflet (mapa urbano) -->
+    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-    <!-- Fuente elegante -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- 🌗 Botón de modo oscuro -->
+    <!-- 🌗 Botón de tema -->
     <button id="theme-toggle" class="theme-btn">🌙</button>
 
     <div class="container">
 
-        <!-- 🧭 Barra lateral -->
+        <!-- 🧭 Sidebar minimalista -->
         <aside class="sidebar">
             <div class="logo">
-                <!-- SVG de ubicación -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="var(--accent-color)" viewBox="0 0 24 24">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
-                </svg>
+                <div class="logo-icon">📍</div>
                 <h2>MyHealthyCity</h2>
             </div>
 
             <ul class="menu">
-                <li data-section="mapa">🗺️ Mapa Urbano</li>
-                <li data-section="movilidad">🚲 Movilidad</li>
-                <li data-section="contaminacion">🌫️ Contaminación</li>
-                <li data-section="incidencias">⚠️ Incidencias</li>
-                <li data-section="micity">🤖 Micity</li>
+                <li data-section="mapa">Mapa Urbano</li>
+                <li data-section="movilidad">Movilidad</li>
+                <li data-section="contaminacion">Contaminación</li>
+                <li data-section="incidencias">Incidencias</li>
+                <li data-section="aurora">Aurora (IA)</li>
             </ul>
 
             <footer>
@@ -45,89 +42,39 @@
             </footer>
         </aside>
 
-        <!-- 💡 Panel principal dinámico -->
+        <!-- 💡 Contenido principal -->
         <main class="main-content" id="main-content">
-            <section class="welcome">
+            <section class="welcome fade-in">
                 <h1>🌆 Bienvenido a <span>My Healthy City</span></h1>
-                <p class="intro">
-                    Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles impulsadas por IA.
-                </p>
+                <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles impulsadas por IA.</p>
 
-                <!-- 🧠 Recomendaciones de IA -->
                 <div class="recommendations">
-                    <h3>🧠 Consejos de Micity</h3>
+                    <h3>💭 Consejos de Aurora</h3>
                     <ul id="recommendation-list">
                         <li>🚴 Da un paseo corto, tu cuerpo y la Tierra te lo agradecerán.</li>
-                        <li>🌳 Abraza un árbol. No arreglará el tráfico, pero te hará sonreír.</li>
-                        <li>💧 Bebe agua, no café... bueno, tal vez uno para empezar el día ☕.</li>
-                        <li>🛰️ Recuerda: incluso los satélites necesitan descansar de tanto monitoreo.</li>
+                        <li>🌿 Abraza un árbol. No arreglará el tráfico, pero te hará sonreír.</li>
+                        <li>💧 Bebe agua, no café... bueno, uno está permitido ☕.</li>
+                        <li>🛰️ Incluso los satélites necesitan descansar de tanto monitoreo.</li>
                     </ul>
                 </div>
 
-                <!-- 🌍 Tarjetas de datos simuladas -->
                 <div class="city-stats">
-                    <div class="stat-card">
-                        <h4>🌡️ 23°C</h4>
-                        <p>Temperatura actual</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>💨 Buena</h4>
-                        <p>Calidad del aire</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>🚗 Fluido</h4>
-                        <p>Tráfico urbano</p>
-                    </div>
-                </div>
-
-                <!-- 🌐 Mini mapa de vista previa -->
-                <div class="data-card" style="margin-top:40px;">
-                    <h3>🗺️ Vista previa del mapa urbano</h3>
-                    <p>Tu ubicación aproximada y zonas urbanas activas.</p>
-                    <div id="map-preview" style="height: 300px; border-radius: 15px; margin-top: 15px;"></div>
+                    <div class="stat-card"><h4>🌡️ 23°C</h4><p>Temperatura</p></div>
+                    <div class="stat-card"><h4>💨 Buena</h4><p>Calidad del aire</p></div>
+                    <div class="stat-card"><h4>🚗 Fluido</h4><p>Tráfico</p></div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Script principal -->
     <script src="scripts/main.js"></script>
 
-    <!-- 🌙 Script modo claro/oscuro -->
+    <!-- Script modo claro/oscuro -->
     <script>
     document.getElementById("theme-toggle").addEventListener("click", () => {
         document.body.classList.toggle("dark-mode");
         const isDark = document.body.classList.contains("dark-mode");
         document.getElementById("theme-toggle").textContent = isDark ? "☀️" : "🌙";
-    });
-
-    // === 🌍 Mini mapa urbano al cargar la página ===
-    document.addEventListener("DOMContentLoaded", () => {
-        const map = L.map('map-preview').setView([0, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        // Simular marcador divertido
-        const jokeMarkers = [
-            { coords: [40.7128, -74.0060], text: "🗽 NY: Aquí el tráfico tiene su propio reloj." },
-            { coords: [34.0522, -118.2437], text: "🌴 LA: Donde el aire se mezcla con estrellas." },
-            { coords: [-12.0464, -77.0428], text: "🇵🇪 Lima: Más claxon que aire puro... pero con sabor a ceviche!" }
-        ];
-
-        jokeMarkers.forEach(j => {
-            L.marker(j.coords).addTo(map).bindPopup(`<b>${j.text}</b>`);
-        });
-
-        // Si tiene geolocalización, centrar mapa
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                const { latitude, longitude } = pos.coords;
-                map.setView([latitude, longitude], 12);
-                L.marker([latitude, longitude]).addTo(map).bindPopup("📍 Estás aquí (más o menos)").openPopup();
-            });
-        }
     });
     </script>
 </body>
