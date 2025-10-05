@@ -43,15 +43,25 @@ async function loadHome() {
         </section>
     `);
 
-    // === Cargar consejos desde el backend (IA Aurora) ===
+    // === 🧠 Consejos de Aurora desde el backend ===
     try {
         const res = await fetch(`${BACKEND_URL}/api/aurora_tips`);
         const data = await res.json();
-        if (data.tips) {
-            const tipsList = data.tips.map(t => `<li>${t}</li>`).join("");
+
+        console.log("Respuesta Aurora:", data); // 🪄 Ver datos reales
+
+        if (data.tips && Array.isArray(data.tips) && data.tips.length > 0) {
+            const tipsList = data.tips
+                .map(t => `<li>${t.replace(/\\u[\dA-F]{4}/gi, "")}</li>`)
+                .join("");
             document.getElementById("aurora-tips").innerHTML = `
                 <h3>💡 Consejos de Aurora</h3>
                 <ul style="list-style:none; margin-top:10px;">${tipsList}</ul>
+            `;
+        } else if (data.error) {
+            document.getElementById("aurora-tips").innerHTML = `
+                <h3>💡 Consejos de Aurora</h3>
+                <p style="color:red;">⚠️ Aurora respondió con error: ${data.error}</p>
             `;
         } else {
             document.getElementById("aurora-tips").innerHTML = `
@@ -59,14 +69,15 @@ async function loadHome() {
                 <p>⚠️ No se pudieron generar consejos en este momento.</p>
             `;
         }
-    } catch {
+    } catch (err) {
+        console.error("❌ Error al conectar con Aurora:", err);
         document.getElementById("aurora-tips").innerHTML = `
             <h3>💡 Consejos de Aurora</h3>
             <p style="color:red;">❌ Error al conectar con Aurora</p>
         `;
     }
 
-    // === Cargar mapa ===
+    // === Mapa urbano ===
     setTimeout(() => {
         const map = L.map('map-preview').setView([0, 0], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

@@ -4,7 +4,7 @@ from openai import OpenAI
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ✅ Inicializar cliente OpenAI con variable de entorno
 api_key = os.getenv("OPENAI_API_KEY")
