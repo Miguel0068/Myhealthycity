@@ -9,12 +9,30 @@ const mainContent = document.getElementById("main-content");
 function transitionContent(html) {
     mainContent.classList.remove("fade-in");
     mainContent.classList.add("fade-out");
-
     setTimeout(() => {
         mainContent.innerHTML = html;
         mainContent.classList.remove("fade-out");
         mainContent.classList.add("fade-in");
     }, 250);
+}
+
+// === Utilidad: fetch con reintentos ===
+async function fetchWithRetry(url, options = {}, retries = 3, delay = 1500) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timeout);
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res;
+        } catch (err) {
+            console.warn(`⚠️ Intento ${i + 1} fallido para ${url}:`, err.message);
+            if (i < retries - 1) await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    throw new Error("❌ No se pudo conectar después de varios intentos.");
 }
 
 // === Sección Home predeterminada ===
@@ -43,42 +61,34 @@ async function loadHome() {
         </section>
     `);
 
-    // === 🧠 Consejos de Aurora desde el backend ===
+    // === Consejos de Aurora ===
     try {
-        const res = await fetch(`${BACKEND_URL}/api/aurora_tips`);
+        const res = await fetchWithRetry(`${BACKEND_URL}/api/aurora_tips`);
         const data = await res.json();
+        console.log("✅ Aurora tips:", data);
 
-        console.log("Respuesta Aurora:", data);
-
-        if (data.tips && Array.isArray(data.tips) && data.tips.length > 0) {
-            const tipsList = data.tips.map(t => `<li>${t.replace(/\\u[\dA-F]{4}/gi, "")}</li>`).join("");
+        if (data.tips && Array.isArray(data.tips)) {
+            const tipsList = data.tips.map(t => `<li>${t}</li>`).join("");
             document.getElementById("aurora-tips").innerHTML = `
                 <h3>💡 Consejos de Aurora</h3>
                 <ul style="list-style:none; margin-top:10px;">${tipsList}</ul>
             `;
-        } else if (data.error) {
-            document.getElementById("aurora-tips").innerHTML = `
-                <h3>💡 Consejos de Aurora</h3>
-                <p style="color:red;">⚠️ Aurora respondió con error: ${data.error}</p>
-            `;
         } else {
             document.getElementById("aurora-tips").innerHTML = `
                 <h3>💡 Consejos de Aurora</h3>
-                <p>⚠️ No se pudieron generar consejos en este momento.</p>
+                <p>⚠️ Aurora está despierta, pero no puede responder ahora.</p>
             `;
         }
     } catch (err) {
-    console.error("❌ Error al conectar con Aurora:", err);
-    document.getElementById("aurora-tips").innerHTML = `
-        <h3>💡 Consejos de Aurora</h3>
-        <p style="color:red;">❌ Error al conectar con Aurora.</p>
-        <small>URL: ${BACKEND_URL}/api/aurora_tips</small>
-        <br><small>${err.message || "Sin detalles del error."}</small>
-    `;
-}
+        console.error("❌ Error al conectar con Aurora:", err);
+        document.getElementById("aurora-tips").innerHTML = `
+            <h3>💡 Consejos de Aurora</h3>
+            <p style="color:red;">⚠️ Aurora está despertando... intenta nuevamente en unos segundos.</p>
+            <small>(${err.message})</small>
+        `;
+    }
 
-
-    // === Mapa urbano ===
+    // === Mapa ===
     setTimeout(() => {
         const map = L.map('map-preview').setView([0, 0], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -99,26 +109,20 @@ async function loadHome() {
     }, 400);
 }
 
-// === Cargar Home al iniciar ===
+// === Cargar Home ===
 document.addEventListener("DOMContentLoaded", loadHome);
 
 // === Navegación dinámica ===
 sections.forEach(item => {
     item.addEventListener("click", async () => {
         const section = item.getAttribute("data-section");
-
-        // Limpiar "active" del menú
         sections.forEach(li => li.classList.remove("active"));
         item.classList.add("active");
 
-        // === 🏠 HOME ===
-        if (section === "home") {
-            loadHome();
-        }
+        if (section === "home") return loadHome();
 
-        // === 🚲 MOVILIDAD ===
-        else if (section === "movilidad") {
-            transitionContent(`
+        if (section === "movilidad") {
+            return transitionContent(`
                 <div class="data-card fade-in">
                     <h3>🚲 Movilidad Sostenible</h3>
                     <p>Visualiza rutas ecológicas, puntos de carga y tráfico en tiempo real (en desarrollo).</p>
@@ -126,10 +130,9 @@ sections.forEach(item => {
             `);
         }
 
-        // === 🌫️ CONTAMINACIÓN ===
-        else if (section === "contaminacion") {
+        if (section === "contaminacion") {
             try {
-                const res = await fetch(`${BACKEND_URL}/api/data`);
+                const res = await fetchWithRetry(`${BACKEND_URL}/api/data`);
                 const data = await res.json();
                 transitionContent(`
                     <div class="data-card fade-in">
@@ -139,27 +142,26 @@ sections.forEach(item => {
                         <p><strong>Tráfico:</strong> ${data.info.traffic_level}</p>
                     </div>
                 `);
-            } catch {
+            } catch (err) {
                 transitionContent(`
                     <div class="data-card fade-in">
-                        ❌ Error al conectar con el backend.
+                        ❌ Error al conectar con el backend (${err.message})
                     </div>
                 `);
             }
+            return;
         }
 
-        // === ⚠️ INCIDENCIAS ===
-        else if (section === "incidencias") {
-            transitionContent(`
+        if (section === "incidencias") {
+            return transitionContent(`
                 <div class="data-card fade-in">
                     <h3>⚠️ Incidencias Urbanas</h3>
-                    <p>Reporta incidencias y ayuda a tu ciudad a mejorar con predicciones IA (en desarrollo).</p>
+                    <p>Reporta incidencias y ayuda a tu ciudad con predicciones IA (en desarrollo).</p>
                 </div>
             `);
         }
 
-        // === 💬 AURORA (Chat IA Integrado con Avatar) ===
-        else if (section === "aurora") {
+        if (section === "aurora") {
             transitionContent(`
                 <div class="data-card fade-in aurora-container">
                     <h3>🌤️ Aurora</h3>
@@ -169,9 +171,7 @@ sections.forEach(item => {
                         <div class="aurora-light a2"></div>
                         <div class="aurora-light a3"></div>
                     </div>
-
                     <div id="chat" class="chat-box"></div>
-
                     <div class="chat-input">
                         <input id="user-input" type="text" placeholder="Escríbeme algo..." />
                         <button id="send-btn">Enviar</button>
@@ -179,66 +179,46 @@ sections.forEach(item => {
                 </div>
             `);
 
-            // Esperar que el DOM cargue completamente antes de asignar eventos
             setTimeout(() => {
                 const sendBtn = document.getElementById("send-btn");
                 const userInput = document.getElementById("user-input");
                 const chatBox = document.getElementById("chat");
                 const avatar = document.querySelector(".aurora-circle");
 
-                if (!sendBtn || !userInput || !chatBox) {
-                    console.error("⚠️ Elementos del chat no cargaron correctamente.");
-                    return;
-                }
-
-                // Evento de enviar mensaje
-                sendBtn.addEventListener("click", async () => {
-                    console.log("🟢 Botón ENVIAR presionado");
-
+                const sendMessage = async () => {
                     const message = userInput.value.trim();
                     if (!message) return;
-
                     chatBox.innerHTML += `<p class="user"><b>Tú:</b> ${message}</p>`;
                     userInput.value = "";
 
                     try {
-                        const res = await fetch(`${BACKEND_URL}/api/chat`, {
+                        const res = await fetchWithRetry(`${BACKEND_URL}/api/chat`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ message })
                         });
-
-                        if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
-
                         const data = await res.json();
                         const reply = data.reply || "Aurora está pensando... 🌌";
 
                         chatBox.innerHTML += `<p class="bot"><b>Aurora:</b> ${reply}</p>`;
                         chatBox.scrollTop = chatBox.scrollHeight;
 
-                        // ✨ Animación del avatar
                         avatar.classList.add("active");
                         setTimeout(() => avatar.classList.remove("active"), 1500);
 
-                        // 🔊 Voz femenina (lector de Aurora)
                         const utterance = new SpeechSynthesisUtterance(reply);
                         utterance.lang = "es-ES";
                         utterance.pitch = 1.2;
                         utterance.rate = 1;
-                        const voices = speechSynthesis.getVoices();
-                        const voice = voices.find(v => v.name.includes("Google español") || v.name.includes("Helena"));
-                        if (voice) utterance.voice = voice;
                         speechSynthesis.speak(utterance);
-                    } catch (error) {
-                        console.error("❌ Error al conectar con Aurora:", error);
-                        chatBox.innerHTML += `<p class="bot" style="color:red;">⚠️ Error al conectar con Aurora.</p>`;
+                    } catch (err) {
+                        console.error("❌ Error Aurora:", err);
+                        chatBox.innerHTML += `<p class="bot" style="color:red;">⚠️ Aurora no responde aún (${err.message})</p>`;
                     }
-                });
+                };
 
-                // Permitir enviar con Enter
-                userInput.addEventListener("keypress", e => {
-                    if (e.key === "Enter") sendBtn.click();
-                });
+                sendBtn.addEventListener("click", sendMessage);
+                userInput.addEventListener("keypress", e => e.key === "Enter" && sendMessage());
             }, 300);
         }
     });
