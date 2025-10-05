@@ -35,28 +35,24 @@ function auroraLocalResponse(message) {
     return responses[Math.floor(Math.random() * responses.length)];
 }
 
-// === Sección Home ===
+// === HOME ===
 async function loadHome() {
     const tipsList = auroraTips.map(t => `<li>${t}</li>`).join("");
-
     transitionContent(`
         <section class="welcome fade-in">
             <h1>🏙️ Bienvenido a <span>My Healthy City</span></h1>
             <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles impulsadas por IA.</p>
-
             <div class="data-card">
                 <h3>🤖 Aurora – Asistente urbano inteligente</h3>
                 <p>💬 Aurora analiza tendencias ambientales, patrones urbanos y bienestar ciudadano.  
                 Aquí tienes algunas recomendaciones generadas por su algoritmo de sostenibilidad:</p>
                 <ul style="list-style:none; margin-top:10px; line-height:1.6;">${tipsList}</ul>
             </div>
-
             <div class="city-stats">
                 <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
                 <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
                 <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
             </div>
-
             <div class="data-card">
                 <h3>🗺️ Vista previa del mapa urbano</h3>
                 <p>Tu ubicación aproximada y zonas urbanas activas.</p>
@@ -65,24 +61,13 @@ async function loadHome() {
         </section>
     `);
 
-    // === Mapa local (sin conexión) ===
     setTimeout(() => {
-        const map = L.map('map-preview').setView([0, 0], 13);
+        const map = L.map('map-preview').setView([-1.664, -78.654], 13); // Riobamba, Ecuador
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 18,
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                const { latitude, longitude } = pos.coords;
-                map.setView([latitude, longitude], 14);
-                L.marker([latitude, longitude])
-                    .addTo(map)
-                    .bindPopup("📍 Tu ubicación")
-                    .openPopup();
-            });
-        }
+        L.marker([-1.664, -78.654]).addTo(map).bindPopup("📍 Riobamba, Ecuador").openPopup();
     }, 400);
 }
 
@@ -98,83 +83,112 @@ sections.forEach(item => {
 
         if (section === "home") return loadHome();
 
-        // === 🚲 MOVILIDAD SOSTENIBLE ===
-if (section === "movilidad") {
-    // Primero cambiamos el contenido visual
-    transitionContent(`
-        <div class="data-card fade-in">
-            <h3>🚲 Movilidad Sostenible</h3>
-            <p>Visualiza rutas ecológicas, puntos de carga y tráfico en tiempo real.</p>
-            <div id="map-container" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
-        </div>
-    `);
+        // === 🚲 MOVILIDAD ===
+        if (section === "movilidad") {
+            transitionContent(`
+                <div class="data-card fade-in">
+                    <h3>🚲 Movilidad Sostenible</h3>
+                    <p>Explora rutas ecológicas y puntos de transporte inteligente en Riobamba.</p>
+                    <div id="map-container" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
+                </div>
+            `);
 
-    // Luego esperamos a que el DOM inserte el contenedor del mapa
-    setTimeout(() => {
-        const mapContainer = document.getElementById("map-container");
-        if (!mapContainer) {
-            console.error("❌ No se encontró el contenedor del mapa.");
-            return;
+            setTimeout(() => {
+                const map = L.map('map-container').setView([-1.664, -78.654], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 18,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                const bikeIcon = L.icon({
+                    iconUrl: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
+                    iconSize: [28, 28]
+                });
+
+                const points = [
+                    { lat: -1.662, lng: -78.655, name: "CicloRuta Central" },
+                    { lat: -1.666, lng: -78.648, name: "Punto Ecológico Sur" },
+                    { lat: -1.658, lng: -78.662, name: "Estación Verde Norte" }
+                ];
+
+                points.forEach(p => {
+                    L.marker([p.lat, p.lng], { icon: bikeIcon })
+                        .addTo(map)
+                        .bindPopup(`🚴 <b>${p.name}</b>`);
+                });
+
+                L.circle([-1.664, -78.654], {
+                    radius: 2000,
+                    color: "#00aaff",
+                    fillColor: "#00aaff",
+                    fillOpacity: 0.1
+                }).addTo(map);
+            }, 600);
         }
 
-        // Crear el mapa solo si el contenedor está listo
-        const map = L.map(mapContainer, { zoomControl: true, preferCanvas: true })
-            .setView([-12.0464, -77.0428], 12);
+        // === 🌫️ CONTAMINACIÓN ===
+        if (section === "contaminacion") {
+            transitionContent(`
+                <div class="data-card fade-in">
+                    <h3>🌫️ Contaminación Ambiental</h3>
+                    <p>Visualiza zonas simuladas de calidad del aire en Riobamba, Ecuador.</p>
+                    <div id="pollution-map" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
+                </div>
+            `);
 
-        // Capas base
-        const voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-            subdomains: 'abcd', maxZoom: 20
-        }).addTo(map);
+            setTimeout(() => {
+                const map = L.map("pollution-map").setView([-1.664, -78.654], 13);
 
-        const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles © Esri — sources: Esri, USGS, IGN, etc.', maxZoom: 19
-        });
+                const base = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+                }).addTo(map);
 
-        const openTopo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-            attribution: 'Map data: © OSM, SRTM | Style: © OpenTopoMap (CC-BY-SA)',
-            maxZoom: 17
-        });
+                const levels = [
+                    { color: "#00e400", label: "Bueno" },
+                    { color: "#ffff00", label: "Moderado" },
+                    { color: "#ff7e00", label: "Dañino (sensibles)" },
+                    { color: "#ff0000", label: "Dañino" },
+                    { color: "#8f3f97", label: "Muy dañino" },
+                    { color: "#7e0023", label: "Peligroso" }
+                ];
 
-        // Selector simple de capas base
-        const baseSelector = L.control({ position: 'topright' });
-        baseSelector.onAdd = function () {
-            const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-            div.style.background = '#fff';
-            div.style.padding = '6px';
-            div.style.fontSize = '12px';
-            div.innerHTML = `
-                <b>Base:</b><br>
-                <button id="b1">🗺️ Voyager</button>
-                <button id="b2">🛰️ Satélite</button>
-                <button id="b3">⛰️ Topo</button>
-            `;
-            return div;
-        };
-        baseSelector.addTo(map);
+                const simulatedZones = [
+                    { lat: -1.659, lng: -78.654, level: 2, name: "Centro Histórico" },
+                    { lat: -1.662, lng: -78.67, level: 3, name: "Sur de Riobamba" },
+                    { lat: -1.648, lng: -78.64, level: 1, name: "Parque Ecológico" },
+                    { lat: -1.67, lng: -78.63, level: 4, name: "Zona Industrial" }
+                ];
 
-        // Activar botones
-        setTimeout(() => {
-            document.getElementById("b1").onclick = () => { map.eachLayer(l => map.removeLayer(l)); voyager.addTo(map); };
-            document.getElementById("b2").onclick = () => { map.eachLayer(l => map.removeLayer(l)); esriSat.addTo(map); };
-            document.getElementById("b3").onclick = () => { map.eachLayer(l => map.removeLayer(l)); openTopo.addTo(map); };
-        }, 500);
-
-        // Ubicación actual
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                const { latitude, longitude } = pos.coords;
-                map.setView([latitude, longitude], 14);
-                L.marker([latitude, longitude])
+                simulatedZones.forEach(z => {
+                    const lvl = levels[z.level];
+                    L.circle([z.lat, z.lng], {
+                        radius: 1500,
+                        color: "#222",
+                        fillColor: lvl.color,
+                        fillOpacity: 0.6,
+                        weight: 1
+                    })
                     .addTo(map)
-                    .bindPopup("📍 Estás aquí")
-                    .openPopup();
-            });
+                    .bindPopup(`<b>${z.name}</b><br>Índice: <b>${lvl.label}</b>`);
+                });
+
+                const legend = L.control({ position: "bottomright" });
+                legend.onAdd = function () {
+                    const div = L.DomUtil.create("div", "info legend");
+                    div.style.background = "#fff";
+                    div.style.padding = "10px";
+                    div.style.borderRadius = "8px";
+                    div.innerHTML = "<b>🌀 Niveles AQI</b><br>";
+                    levels.forEach(l => {
+                        div.innerHTML += `<div style="margin-top:3px;">
+                            <span style="background:${l.color};width:14px;height:10px;display:inline-block;margin-right:5px;"></span>${l.label}
+                        </div>`;
+                    });
+                    return div;
+                };
+                legend.addTo(map);
+            }, 800);
         }
-
-    }, 600); // aumentamos el retardo para asegurar el render
-}
-
 
         // === 💬 AURORA ===
         if (section === "aurora") {
@@ -213,12 +227,6 @@ if (section === "movilidad") {
 
                     avatar.classList.add("active");
                     setTimeout(() => avatar.classList.remove("active"), 1500);
-
-                    const utterance = new SpeechSynthesisUtterance(reply);
-                    utterance.lang = "es-ES";
-                    utterance.pitch = 1.2;
-                    utterance.rate = 1;
-                    speechSynthesis.speak(utterance);
                 };
 
                 sendBtn.addEventListener("click", sendMessage);
