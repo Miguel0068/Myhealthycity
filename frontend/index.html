@@ -8,21 +8,27 @@
     <!-- Estilos -->
     <link rel="stylesheet" href="styles/style.css">
 
-    <!-- Ícono -->
-    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
-
     <!-- Leaflet (para el mapa urbano) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Fuente elegante -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
+    <!-- 🌗 Botón de modo oscuro -->
+    <button id="theme-toggle" class="theme-btn">🌙</button>
+
     <div class="container">
 
         <!-- 🧭 Barra lateral -->
         <aside class="sidebar">
             <div class="logo">
-                <img src="assets/logo.svg" alt="Logo City">
+                <!-- SVG de ubicación -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="var(--accent-color)" viewBox="0 0 24 24">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+                </svg>
                 <h2>MyHealthyCity</h2>
             </div>
 
@@ -46,10 +52,18 @@
                 <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles.</p>
             </section>
         </main>
-
     </div>
 
     <!-- Script principal -->
     <script src="scripts/main.js"></script>
+
+    <!-- 🌙 Script modo claro/oscuro -->
+    <script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        const isDark = document.body.classList.contains("dark-mode");
+        document.getElementById("theme-toggle").textContent = isDark ? "☀️" : "🌙";
+    });
+    </script>
 </body>
 </html>

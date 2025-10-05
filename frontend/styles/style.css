@@ -1,3 +1,77 @@
+/* 🎨 Paleta base (modo claro por defecto) */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #111111;
+    --sidebar-bg: #0f0f0f;
+    --accent-color: #00aaff;
+    --card-bg: #f5f5f5;
+}
+
+/* 🌙 Modo oscuro */
+body.dark-mode {
+    --bg-color: #0f0f0f;
+    --text-color: #eaeaea;
+    --sidebar-bg: #1c1c1c;
+    --accent-color: #9cd9ff;
+    --card-bg: #1e1e1e;
+}
+
+/* === APLICACIÓN DE VARIABLES === */
+body {
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background 0.4s, color 0.4s;
+}
+
+/* Sidebar */
+.sidebar {
+    background: var(--sidebar-bg);
+    transition: background 0.4s;
+}
+
+/* Textos y títulos */
+h1, h2, h3, p {
+    color: var(--text-color);
+}
+
+/* Botones */
+.menu li {
+    color: var(--accent-color);
+    transition: transform 0.2s, background 0.3s;
+}
+.menu li:hover {
+    transform: scale(1.05);
+    background: var(--card-bg);
+    border-radius: 10px;
+}
+
+/* Tarjetas */
+.data-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* 🌗 Botón de tema */
+.theme-btn {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    padding: 8px 12px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    font-size: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.theme-btn:hover {
+    opacity: 0.8;
+}
+
+
 /* === RESET GENERAL === */
 * {
     margin: 0;
