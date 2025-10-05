@@ -18,20 +18,15 @@ function transitionContent(html) {
 }
 
 // === Sección Home predeterminada ===
-function loadHome() {
+async function loadHome() {
     transitionContent(`
         <section class="welcome fade-in">
             <h1>🏙️ Bienvenido a <span>My Healthy City</span></h1>
             <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles impulsadas por IA.</p>
 
-            <div class="data-card">
+            <div id="aurora-tips" class="data-card">
                 <h3>💡 Consejos de Aurora</h3>
-                <ul style="list-style:none; margin-top:10px;">
-                    <li>🚶 Da un paseo corto: tu cuerpo y la Tierra te lo agradecerán.</li>
-                    <li>🌳 Abraza un árbol. No arreglará el tráfico, pero te hará sonreír.</li>
-                    <li>💧 Bebe agua (no café... bueno, tal vez uno para empezar el día ☕).</li>
-                    <li>🌙 Incluso los satélites necesitan descansar: desconéctate un rato.</li>
-                </ul>
+                <p>Cargando sabiduría urbana...</p>
             </div>
 
             <div class="city-stats">
@@ -48,6 +43,30 @@ function loadHome() {
         </section>
     `);
 
+    // === Cargar consejos desde el backend (IA Aurora) ===
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/aurora_tips`);
+        const data = await res.json();
+        if (data.tips) {
+            const tipsList = data.tips.map(t => `<li>${t}</li>`).join("");
+            document.getElementById("aurora-tips").innerHTML = `
+                <h3>💡 Consejos de Aurora</h3>
+                <ul style="list-style:none; margin-top:10px;">${tipsList}</ul>
+            `;
+        } else {
+            document.getElementById("aurora-tips").innerHTML = `
+                <h3>💡 Consejos de Aurora</h3>
+                <p>⚠️ No se pudieron generar consejos en este momento.</p>
+            `;
+        }
+    } catch {
+        document.getElementById("aurora-tips").innerHTML = `
+            <h3>💡 Consejos de Aurora</h3>
+            <p style="color:red;">❌ Error al conectar con Aurora</p>
+        `;
+    }
+
+    // === Cargar mapa ===
     setTimeout(() => {
         const map = L.map('map-preview').setView([0, 0], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -109,7 +128,11 @@ sections.forEach(item => {
                     </div>
                 `);
             } catch {
-                transitionContent(`<div class="data-card fade-in">❌ Error al conectar con el backend.</div>`);
+                transitionContent(`
+                    <div class="data-card fade-in">
+                        ❌ Error al conectar con el backend.
+                    </div>
+                `);
             }
         }
 
@@ -123,7 +146,7 @@ sections.forEach(item => {
             `);
         }
 
-        // === 💬 AURORA ===
+        // === 💬 AURORA (Chat IA) ===
         else if (section === "aurora") {
             transitionContent(`
                 <div class="data-card fade-in">
