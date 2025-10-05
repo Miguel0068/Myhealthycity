@@ -1,76 +1,27 @@
-/* 🎨 Paleta base (modo claro por defecto) */
+/* ============================================================
+   🎨 ESTILO GENERAL – MY HEALTHY CITY
+   Diseño monocromático elegante con modo claro/oscuro
+   ============================================================ */
+
+/* === PALETA BASE (modo claro por defecto) === */
 :root {
-    --bg-color: #ffffff;
-    --text-color: #111111;
-    --sidebar-bg: #0f0f0f;
-    --accent-color: #00aaff;
-    --card-bg: #f5f5f5;
+    --bg-color: #f8f8f8;
+    --text-color: #1c1c1c;
+    --sidebar-bg: #111111;
+    --accent-color: #8ab4f8; /* Azul suave estilo plata */
+    --card-bg: #ffffff;
+    --shadow: rgba(0, 0, 0, 0.08);
 }
 
-/* 🌙 Modo oscuro */
+/* 🌙 MODO OSCURO */
 body.dark-mode {
     --bg-color: #0f0f0f;
-    --text-color: #eaeaea;
-    --sidebar-bg: #1c1c1c;
-    --accent-color: #9cd9ff;
+    --text-color: #e8e8e8;
+    --sidebar-bg: #1b1b1b;
+    --accent-color: #9ec8ff;
     --card-bg: #1e1e1e;
+    --shadow: rgba(255, 255, 255, 0.08);
 }
-
-/* === APLICACIÓN DE VARIABLES === */
-body {
-    background: var(--bg-color);
-    color: var(--text-color);
-    transition: background 0.4s, color 0.4s;
-}
-
-/* Sidebar */
-.sidebar {
-    background: var(--sidebar-bg);
-    transition: background 0.4s;
-}
-
-/* Textos y títulos */
-h1, h2, h3, p {
-    color: var(--text-color);
-}
-
-/* Botones */
-.menu li {
-    color: var(--accent-color);
-    transition: transform 0.2s, background 0.3s;
-}
-.menu li:hover {
-    transform: scale(1.05);
-    background: var(--card-bg);
-    border-radius: 10px;
-}
-
-/* Tarjetas */
-.data-card {
-    background: var(--card-bg);
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* 🌗 Botón de tema */
-.theme-btn {
-    position: fixed;
-    top: 15px;
-    right: 20px;
-    padding: 8px 12px;
-    border-radius: 50%;
-    background: var(--accent-color);
-    border: none;
-    cursor: pointer;
-    color: #fff;
-    font-size: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-.theme-btn:hover {
-    opacity: 0.8;
-}
-
 
 /* === RESET GENERAL === */
 * {
@@ -79,16 +30,18 @@ h1, h2, h3, p {
     box-sizing: border-box;
 }
 
-/* === ESTILOS BASE === */
+/* === TIPOGRAFÍA Y BASE === */
 body {
     font-family: "Poppins", sans-serif;
-    background-color: #fafafa;
-    color: #000;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background 0.4s, color 0.4s;
     overflow: hidden;
 }
 
-h1, h2, h3 {
-    font-weight: 600;
+h1, h2, h3, h4, h5, h6, p {
+    color: var(--text-color);
+    transition: color 0.4s;
 }
 
 /* === CONTENEDOR PRINCIPAL === */
@@ -98,31 +51,34 @@ h1, h2, h3 {
     width: 100%;
 }
 
-/* === SIDEBAR === */
+/* ============================================================
+   🧭 SIDEBAR (menú lateral)
+   ============================================================ */
 .sidebar {
     width: 240px;
-    background-color: #0d0d0d;
-    color: #00aaff;
+    background: var(--sidebar-bg);
+    color: var(--accent-color);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 25px 0;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 4px 0 20px var(--shadow);
+    transition: background 0.4s, box-shadow 0.4s;
 }
 
 .logo {
     text-align: center;
     margin-bottom: 20px;
 }
-
-.logo img {
-    width: 60px;
-    margin-bottom: 10px;
+.logo svg {
+    width: 45px;
+    height: 45px;
 }
-
 .logo h2 {
     font-size: 1.3rem;
-    color: #00aaff;
+    margin-top: 8px;
+    color: var(--accent-color);
+    font-weight: 600;
 }
 
 /* === MENÚ LATERAL === */
@@ -132,21 +88,20 @@ h1, h2, h3 {
 }
 
 .menu li {
-    margin: 20px 0;
+    margin: 18px 0;
     cursor: pointer;
-    padding: 10px;
-    border-radius: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 500;
+    color: var(--accent-color);
     transition: all 0.3s ease;
 }
 
 .menu li:hover {
-    background: #00aaff;
-    color: #fff;
-    transform: translateX(5px);
-}
-
-.menu li:active {
-    background: #007acc;
+    background: var(--accent-color);
+    color: var(--sidebar-bg);
+    transform: translateX(6px);
+    box-shadow: 0 2px 8px var(--shadow);
 }
 
 /* === FOOTER DE LA SIDEBAR === */
@@ -157,61 +112,112 @@ footer {
     padding: 10px 0;
 }
 
-/* === CONTENIDO PRINCIPAL === */
+/* ============================================================
+   💡 CONTENIDO PRINCIPAL
+   ============================================================ */
 .main-content {
     flex: 1;
-    padding: 40px;
+    padding: 50px;
     overflow-y: auto;
     position: relative;
-    background-color: #fff;
+    background: var(--bg-color);
+    transition: background 0.4s;
 }
 
 /* === SECCIÓN DE BIENVENIDA === */
 .welcome {
     text-align: center;
-    margin-top: 15%;
+    margin-top: 10%;
     animation: fadeIn 0.6s ease-in-out;
 }
 
 .welcome h1 {
-    font-size: 2.5rem;
-    color: #0d0d0d;
+    font-size: 2.6rem;
+    font-weight: 600;
+    color: var(--text-color);
 }
-
 .welcome h1 span {
-    color: #00aaff;
+    color: var(--accent-color);
 }
-
 .welcome p {
-    margin-top: 15px;
-    font-size: 1.2rem;
-    color: #555;
+    margin-top: 12px;
+    font-size: 1.1rem;
+    color: #666;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* === TARJETAS DE DATOS === */
-.data-card {
-    background: #ffffff;
+/* === RECOMENDACIONES IA === */
+.recommendations {
+    background: var(--card-bg);
     border-radius: 15px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
     padding: 25px;
-    margin: 20px 0;
-    animation: fadeIn 0.4s ease-in-out;
+    margin: 40px auto;
+    width: 80%;
+    box-shadow: 0 4px 12px var(--shadow);
+    transition: background 0.4s, box-shadow 0.4s;
 }
 
-.data-card h3 {
-    color: #00aaff;
+.recommendations h3 {
+    color: var(--accent-color);
     margin-bottom: 10px;
+    font-weight: 600;
 }
 
-/* === MAPA (LEAFLET) === */
+.recommendations ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+.recommendations li {
+    margin: 8px 0;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+/* === ESTADÍSTICAS URBANAS === */
+.city-stats {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+.stat-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 18px 30px;
+    width: 170px;
+    box-shadow: 0 3px 12px var(--shadow);
+    transition: transform 0.3s, background 0.4s;
+}
+.stat-card:hover {
+    transform: translateY(-6px);
+}
+.stat-card h4 {
+    font-size: 1.4rem;
+    color: var(--accent-color);
+}
+.stat-card p {
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+/* ============================================================
+   🗺️ MAPA URBANO (Leaflet)
+   ============================================================ */
 #map {
     width: 100%;
     height: 500px;
     border-radius: 15px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 15px var(--shadow);
+    margin-top: 15px;
 }
 
-/* === CHAT MICITY === */
+/* ============================================================
+   🤖 CHAT MICITY
+   ============================================================ */
 .chat-input {
     display: flex;
     justify-content: space-between;
@@ -220,40 +226,63 @@ footer {
 }
 
 #chat-box {
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
+    background: var(--card-bg);
     border-radius: 10px;
-    padding: 10px;
+    padding: 12px;
     font-size: 0.95rem;
+    box-shadow: 0 2px 10px var(--shadow);
 }
-
 #chat-box p {
     margin-bottom: 10px;
 }
-
 #chat-box b {
-    color: #00aaff;
+    color: var(--accent-color);
 }
 
-/* === SCROLLBAR PERSONALIZADA === */
+/* ============================================================
+   🌗 BOTÓN DE MODO CLARO/OSCURO
+   ============================================================ */
+.theme-btn {
+    position: fixed;
+    top: 18px;
+    right: 25px;
+    padding: 12px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    font-size: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+.theme-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   🌐 SCROLLBAR PERSONALIZADA
+   ============================================================ */
 .main-content::-webkit-scrollbar {
     width: 10px;
 }
-
 .main-content::-webkit-scrollbar-thumb {
-    background-color: #00aaff;
+    background-color: var(--accent-color);
     border-radius: 5px;
 }
-
 .main-content::-webkit-scrollbar-track {
-    background-color: #f1f1f1;
+    background-color: #e5e5e5;
 }
 
-/* === ANIMACIONES === */
+/* ============================================================
+   ✨ ANIMACIONES
+   ============================================================ */
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(15px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
@@ -261,7 +290,9 @@ footer {
     }
 }
 
-/* === RESPONSIVE DESIGN === */
+/* ============================================================
+   📱 RESPONSIVE DESIGN
+   ============================================================ */
 @media (max-width: 900px) {
     .container {
         flex-direction: column;
@@ -278,7 +309,7 @@ footer {
     .menu {
         display: flex;
         flex-direction: row;
-        gap: 15px;
+        gap: 12px;
     }
 
     .menu li {
@@ -288,6 +319,6 @@ footer {
     }
 
     .main-content {
-        padding: 20px;
+        padding: 25px;
     }
 }
