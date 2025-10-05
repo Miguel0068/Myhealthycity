@@ -16,26 +16,40 @@ function transitionContent(html) {
     }, 250);
 }
 
-// === Utilidad: fetch con reintentos ===
-async function fetchWithRetry(url, options = {}, retries = 3, delay = 1500) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000);
-            const res = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(timeout);
+// === Fallbacks locales (si Render no responde) ===
+const localTips = [
+    "🌱 Cuida las plantas de tu barrio y riega con agua reutilizada.",
+    "🚴 Usa la bici o camina, tu ciudad y tus pulmones lo agradecerán.",
+    "💡 Ahorra energía: apaga luces y desconecta cargadores.",
+    "🧃 Reduce plásticos: usa botellas reutilizables."
+];
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res;
-        } catch (err) {
-            console.warn(`⚠️ Intento ${i + 1} fallido para ${url}:`, err.message);
-            if (i < retries - 1) await new Promise(r => setTimeout(r, delay));
-        }
-    }
-    throw new Error("❌ No se pudo conectar después de varios intentos.");
+function auroraLocalResponse(message) {
+    const responses = [
+        "🌤️ Aurora: Estoy aquí para ayudarte a hacer tu ciudad más saludable 💚",
+        "💬 Aurora: Recuerda que pequeñas acciones crean grandes cambios 🌍",
+        "🌿 Aurora: ¡Tu esfuerzo cuenta para un futuro sostenible!",
+        "🌈 Aurora: Qué bonito verte cuidar tu entorno 🪴"
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
 }
 
-// === Sección Home predeterminada ===
+// === Fetch seguro con timeout ===
+async function safeFetch(url, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 7000);
+    try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+    } catch (err) {
+        console.warn("⚠️ Conexión Render fallida:", err.message);
+        return null;
+    }
+}
+
+// === Sección Home ===
 async function loadHome() {
     transitionContent(`
         <section class="welcome fade-in">
@@ -44,7 +58,7 @@ async function loadHome() {
 
             <div id="aurora-tips" class="data-card">
                 <h3>💡 Consejos de Aurora</h3>
-                <p>Cargando sabiduría urbana...</p>
+                <p>Cargando...</p>
             </div>
 
             <div class="city-stats">
@@ -61,34 +75,18 @@ async function loadHome() {
         </section>
     `);
 
-    // === Consejos de Aurora ===
-    try {
-        const res = await fetchWithRetry(`${BACKEND_URL}/api/aurora_tips`);
-        const data = await res.json();
-        console.log("✅ Aurora tips:", data);
+    // Intentar obtener tips desde el backend
+    const data = await safeFetch(`${BACKEND_URL}/api/aurora_tips`);
+    const tips = data?.tips?.length ? data.tips : localTips;
+    const tipsList = tips.map(t => `<li>${t}</li>`).join("");
 
-        if (data.tips && Array.isArray(data.tips)) {
-            const tipsList = data.tips.map(t => `<li>${t}</li>`).join("");
-            document.getElementById("aurora-tips").innerHTML = `
-                <h3>💡 Consejos de Aurora</h3>
-                <ul style="list-style:none; margin-top:10px;">${tipsList}</ul>
-            `;
-        } else {
-            document.getElementById("aurora-tips").innerHTML = `
-                <h3>💡 Consejos de Aurora</h3>
-                <p>⚠️ Aurora está despierta, pero no puede responder ahora.</p>
-            `;
-        }
-    } catch (err) {
-        console.error("❌ Error al conectar con Aurora:", err);
-        document.getElementById("aurora-tips").innerHTML = `
-            <h3>💡 Consejos de Aurora</h3>
-            <p style="color:red;">⚠️ Aurora está despertando... intenta nuevamente en unos segundos.</p>
-            <small>(${err.message})</small>
-        `;
-    }
+    document.getElementById("aurora-tips").innerHTML = `
+        <h3>💡 Consejos de Aurora</h3>
+        <ul style="list-style:none; margin-top:10px;">${tipsList}</ul>
+        <small style="opacity:0.6;">${data ? "🌐 En línea" : "⚙️ Modo local"}</small>
+    `;
 
-    // === Mapa ===
+    // Mapa
     setTimeout(() => {
         const map = L.map('map-preview').setView([0, 0], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -109,7 +107,6 @@ async function loadHome() {
     }, 400);
 }
 
-// === Cargar Home ===
 document.addEventListener("DOMContentLoaded", loadHome);
 
 // === Navegación dinámica ===
@@ -120,46 +117,6 @@ sections.forEach(item => {
         item.classList.add("active");
 
         if (section === "home") return loadHome();
-
-        if (section === "movilidad") {
-            return transitionContent(`
-                <div class="data-card fade-in">
-                    <h3>🚲 Movilidad Sostenible</h3>
-                    <p>Visualiza rutas ecológicas, puntos de carga y tráfico en tiempo real (en desarrollo).</p>
-                </div>
-            `);
-        }
-
-        if (section === "contaminacion") {
-            try {
-                const res = await fetchWithRetry(`${BACKEND_URL}/api/data`);
-                const data = await res.json();
-                transitionContent(`
-                    <div class="data-card fade-in">
-                        <h3>🌫️ Contaminación Ambiental</h3>
-                        <p><strong>Temperatura:</strong> ${data.info.temperature} °C</p>
-                        <p><strong>Calidad del aire:</strong> ${data.info.air_quality}</p>
-                        <p><strong>Tráfico:</strong> ${data.info.traffic_level}</p>
-                    </div>
-                `);
-            } catch (err) {
-                transitionContent(`
-                    <div class="data-card fade-in">
-                        ❌ Error al conectar con el backend (${err.message})
-                    </div>
-                `);
-            }
-            return;
-        }
-
-        if (section === "incidencias") {
-            return transitionContent(`
-                <div class="data-card fade-in">
-                    <h3>⚠️ Incidencias Urbanas</h3>
-                    <p>Reporta incidencias y ayuda a tu ciudad con predicciones IA (en desarrollo).</p>
-                </div>
-            `);
-        }
 
         if (section === "aurora") {
             transitionContent(`
@@ -186,35 +143,29 @@ sections.forEach(item => {
                 const avatar = document.querySelector(".aurora-circle");
 
                 const sendMessage = async () => {
-                    const message = userInput.value.trim();
-                    if (!message) return;
-                    chatBox.innerHTML += `<p class="user"><b>Tú:</b> ${message}</p>`;
+                    const msg = userInput.value.trim();
+                    if (!msg) return;
+                    chatBox.innerHTML += `<p class="user"><b>Tú:</b> ${msg}</p>`;
                     userInput.value = "";
 
-                    try {
-                        const res = await fetchWithRetry(`${BACKEND_URL}/api/chat`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ message })
-                        });
-                        const data = await res.json();
-                        const reply = data.reply || "Aurora está pensando... 🌌";
+                    const res = await safeFetch(`${BACKEND_URL}/api/chat`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ message: msg })
+                    });
 
-                        chatBox.innerHTML += `<p class="bot"><b>Aurora:</b> ${reply}</p>`;
-                        chatBox.scrollTop = chatBox.scrollHeight;
+                    const reply = res?.reply || auroraLocalResponse(msg);
+                    chatBox.innerHTML += `<p class="bot"><b>Aurora:</b> ${reply}</p>`;
+                    chatBox.scrollTop = chatBox.scrollHeight;
 
-                        avatar.classList.add("active");
-                        setTimeout(() => avatar.classList.remove("active"), 1500);
+                    avatar.classList.add("active");
+                    setTimeout(() => avatar.classList.remove("active"), 1500);
 
-                        const utterance = new SpeechSynthesisUtterance(reply);
-                        utterance.lang = "es-ES";
-                        utterance.pitch = 1.2;
-                        utterance.rate = 1;
-                        speechSynthesis.speak(utterance);
-                    } catch (err) {
-                        console.error("❌ Error Aurora:", err);
-                        chatBox.innerHTML += `<p class="bot" style="color:red;">⚠️ Aurora no responde aún (${err.message})</p>`;
-                    }
+                    const utterance = new SpeechSynthesisUtterance(reply);
+                    utterance.lang = "es-ES";
+                    utterance.pitch = 1.2;
+                    utterance.rate = 1;
+                    speechSynthesis.speak(utterance);
                 };
 
                 sendBtn.addEventListener("click", sendMessage);
