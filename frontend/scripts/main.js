@@ -84,47 +84,83 @@ sections.forEach(item => {
         if (section === "home") return loadHome();
 
         // === 🚲 MOVILIDAD ===
-        if (section === "movilidad") {
-            transitionContent(`
-                <div class="data-card fade-in">
-                    <h3>🚲 Movilidad Sostenible</h3>
-                    <p>Explora rutas ecológicas y puntos de transporte inteligente en Riobamba.</p>
-                    <div id="map-container" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
-                </div>
-            `);
+if (section === "movilidad") {
+    transitionContent(`
+        <div class="data-card fade-in">
+            <h3>🚲 Movilidad Sostenible</h3>
+            <p>Explora rutas ecológicas, puntos de carga y tráfico en tiempo real en <b>Riobamba, Ecuador</b>.</p>
+            <div id="map-container" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
+        </div>
+    `);
 
-            setTimeout(() => {
-                const map = L.map('map-container').setView([-1.664, -78.654], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 18,
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
+    setTimeout(() => {
+        const map = L.map('map-container', { zoomControl: true }).setView([-1.664, -78.654], 13);
 
-                const bikeIcon = L.icon({
-                    iconUrl: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
-                    iconSize: [28, 28]
-                });
+        // === Capas base ===
+        const voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap & CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
 
-                const points = [
-                    { lat: -1.662, lng: -78.655, name: "CicloRuta Central" },
-                    { lat: -1.666, lng: -78.648, name: "Punto Ecológico Sur" },
-                    { lat: -1.658, lng: -78.662, name: "Estación Verde Norte" }
-                ];
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri, USGS, IGN',
+            maxZoom: 19
+        });
 
-                points.forEach(p => {
-                    L.marker([p.lat, p.lng], { icon: bikeIcon })
-                        .addTo(map)
-                        .bindPopup(`🚴 <b>${p.name}</b>`);
-                });
+        const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenTopoMap, SRTM',
+            maxZoom: 17
+        });
 
-                L.circle([-1.664, -78.654], {
-                    radius: 2000,
-                    color: "#00aaff",
-                    fillColor: "#00aaff",
-                    fillOpacity: 0.1
-                }).addTo(map);
-            }, 600);
+        // === Control de capas (bonito y simple) ===
+        const baseMaps = {
+            "🗺️ Voyager": voyager,
+            "🛰️ Satélite": satellite,
+            "⛰️ Topográfico": topo
+        };
+        L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
+
+        // === Icono de bicicleta ===
+        const bikeIcon = L.icon({
+            iconUrl: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
+            iconSize: [28, 28]
+        });
+
+        // === Puntos simulados de movilidad ===
+        const points = [
+            { lat: -1.662, lng: -78.655, name: "CicloRuta Central" },
+            { lat: -1.666, lng: -78.648, name: "Punto Ecológico Sur" },
+            { lat: -1.658, lng: -78.662, name: "Estación Verde Norte" }
+        ];
+
+        points.forEach(p => {
+            L.marker([p.lat, p.lng], { icon: bikeIcon })
+                .addTo(map)
+                .bindPopup(`🚴 <b>${p.name}</b>`);
+        });
+
+        // === Círculo de alcance verde ===
+        L.circle([-1.664, -78.654], {
+            radius: 2000,
+            color: "#00aaff",
+            fillColor: "#00aaff",
+            fillOpacity: 0.1
+        }).addTo(map);
+
+        // === Mostrar ubicación actual del usuario ===
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                const { latitude, longitude } = pos.coords;
+                L.marker([latitude, longitude])
+                    .addTo(map)
+                    .bindPopup("📍 Estás aquí")
+                    .openPopup();
+                map.setView([latitude, longitude], 14);
+            });
         }
+    }, 600);
+}
 
         // === 🌫️ CONTAMINACIÓN ===
         if (section === "contaminacion") {
