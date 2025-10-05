@@ -1,0 +1,219 @@
+/* === RESET GENERAL === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* === ESTILOS BASE === */
+body {
+    font-family: "Poppins", sans-serif;
+    background-color: #fafafa;
+    color: #000;
+    overflow: hidden;
+}
+
+h1, h2, h3 {
+    font-weight: 600;
+}
+
+/* === CONTENEDOR PRINCIPAL === */
+.container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* === SIDEBAR === */
+.sidebar {
+    width: 240px;
+    background-color: #0d0d0d;
+    color: #00aaff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 25px 0;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo img {
+    width: 60px;
+    margin-bottom: 10px;
+}
+
+.logo h2 {
+    font-size: 1.3rem;
+    color: #00aaff;
+}
+
+/* === MENÚ LATERAL === */
+.menu {
+    list-style: none;
+    padding: 0 20px;
+}
+
+.menu li {
+    margin: 20px 0;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.menu li:hover {
+    background: #00aaff;
+    color: #fff;
+    transform: translateX(5px);
+}
+
+.menu li:active {
+    background: #007acc;
+}
+
+/* === FOOTER DE LA SIDEBAR === */
+footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #888;
+    padding: 10px 0;
+}
+
+/* === CONTENIDO PRINCIPAL === */
+.main-content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    position: relative;
+    background-color: #fff;
+}
+
+/* === SECCIÓN DE BIENVENIDA === */
+.welcome {
+    text-align: center;
+    margin-top: 15%;
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+.welcome h1 {
+    font-size: 2.5rem;
+    color: #0d0d0d;
+}
+
+.welcome h1 span {
+    color: #00aaff;
+}
+
+.welcome p {
+    margin-top: 15px;
+    font-size: 1.2rem;
+    color: #555;
+}
+
+/* === TARJETAS DE DATOS === */
+.data-card {
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    margin: 20px 0;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.data-card h3 {
+    color: #00aaff;
+    margin-bottom: 10px;
+}
+
+/* === MAPA (LEAFLET) === */
+#map {
+    width: 100%;
+    height: 500px;
+    border-radius: 15px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* === CHAT MICITY === */
+.chat-input {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+#chat-box {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 0.95rem;
+}
+
+#chat-box p {
+    margin-bottom: 10px;
+}
+
+#chat-box b {
+    color: #00aaff;
+}
+
+/* === SCROLLBAR PERSONALIZADA === */
+.main-content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+    background-color: #00aaff;
+    border-radius: 5px;
+}
+
+.main-content::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+/* === ANIMACIONES === */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        padding: 10px 0;
+    }
+
+    .menu {
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .menu li {
+        margin: 0;
+        font-size: 0.9rem;
+        padding: 8px 10px;
+    }
+
+    .main-content {
+        padding: 20px;
+    }
+}

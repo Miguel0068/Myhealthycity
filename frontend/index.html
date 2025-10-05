@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Healthy City</title>
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="styles/style.css">
+
+    <!-- Ícono -->
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+
+    <!-- Leaflet (para el mapa urbano) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- 🧭 Barra lateral -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="assets/logo.svg" alt="Logo City">
+                <h2>MyHealthyCity</h2>
+            </div>
+
+            <ul class="menu">
+                <li data-section="mapa">🗺️ Mapa Urbano</li>
+                <li data-section="movilidad">🚲 Movilidad</li>
+                <li data-section="contaminacion">🌫️ Contaminación</li>
+                <li data-section="incidencias">⚠️ Incidencias</li>
+                <li data-section="micity">🤖 Micity</li>
+            </ul>
+
+            <footer>
+                <p>NASA Space Apps 2025 🚀</p>
+            </footer>
+        </aside>
+
+        <!-- 💡 Panel principal dinámico -->
+        <main class="main-content" id="main-content">
+            <section class="welcome">
+                <h1>Bienvenido a <span>My Healthy City</span></h1>
+                <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles.</p>
+            </section>
+        </main>
+
+    </div>
+
+    <!-- Script principal -->
+    <script src="scripts/main.js"></script>
+</body>
+</html>
