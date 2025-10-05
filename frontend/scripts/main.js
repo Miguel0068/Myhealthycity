@@ -48,12 +48,10 @@ async function loadHome() {
         const res = await fetch(`${BACKEND_URL}/api/aurora_tips`);
         const data = await res.json();
 
-        console.log("Respuesta Aurora:", data); // 🪄 Ver datos reales
+        console.log("Respuesta Aurora:", data);
 
         if (data.tips && Array.isArray(data.tips) && data.tips.length > 0) {
-            const tipsList = data.tips
-                .map(t => `<li>${t.replace(/\\u[\dA-F]{4}/gi, "")}</li>`)
-                .join("");
+            const tipsList = data.tips.map(t => `<li>${t.replace(/\\u[\dA-F]{4}/gi, "")}</li>`).join("");
             document.getElementById("aurora-tips").innerHTML = `
                 <h3>💡 Consejos de Aurora</h3>
                 <ul style="list-style:none; margin-top:10px;">${tipsList}</ul>
@@ -157,43 +155,88 @@ sections.forEach(item => {
             `);
         }
 
-        // === 💬 AURORA (Chat IA) ===
+        // === 💬 AURORA (Chat IA Integrado con Avatar) ===
         else if (section === "aurora") {
             transitionContent(`
-                <div class="data-card fade-in">
-                    <h3>💬 Aurora</h3>
-                    <div id="chat-box" class="chat-box"></div>
+                <div class="data-card fade-in aurora-container">
+                    <h3>🌤️ Aurora</h3>
+                    <p>Tu asistente urbano de luz y conocimiento 🌱</p>
+                    <div class="aurora-circle">
+                        <div class="aurora-light a1"></div>
+                        <div class="aurora-light a2"></div>
+                        <div class="aurora-light a3"></div>
+                    </div>
+
+                    <div id="chat" class="chat-box"></div>
+
                     <div class="chat-input">
-                        <input id="user-input" type="text" placeholder="Habla con Aurora..." />
+                        <input id="user-input" type="text" placeholder="Escríbeme algo..." />
                         <button id="send-btn">Enviar</button>
                     </div>
                 </div>
             `);
 
-            const sendBtn = document.getElementById("send-btn");
-            const userInput = document.getElementById("user-input");
-            const chatBox = document.getElementById("chat-box");
+            // Esperar que el DOM cargue completamente antes de asignar eventos
+            setTimeout(() => {
+                const sendBtn = document.getElementById("send-btn");
+                const userInput = document.getElementById("user-input");
+                const chatBox = document.getElementById("chat");
+                const avatar = document.querySelector(".aurora-circle");
 
-            sendBtn.addEventListener("click", async () => {
-                const message = userInput.value.trim();
-                if (!message) return;
-                chatBox.innerHTML += `<p><b>Tú:</b> ${message}</p>`;
-                userInput.value = "";
-
-                try {
-                    const res = await fetch(`${BACKEND_URL}/api/chat`, {
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({ message })
-                    });
-                    const data = await res.json();
-                    chatBox.innerHTML += `<p><b>Aurora:</b> ${data.reply}</p>`;
-                } catch {
-                    chatBox.innerHTML += `<p style="color:red;">Error al conectar con Aurora 🌌</p>`;
+                if (!sendBtn || !userInput || !chatBox) {
+                    console.error("⚠️ Elementos del chat no cargaron correctamente.");
+                    return;
                 }
 
-                chatBox.scrollTop = chatBox.scrollHeight;
-            });
+                // Evento de enviar mensaje
+                sendBtn.addEventListener("click", async () => {
+                    console.log("🟢 Botón ENVIAR presionado");
+
+                    const message = userInput.value.trim();
+                    if (!message) return;
+
+                    chatBox.innerHTML += `<p class="user"><b>Tú:</b> ${message}</p>`;
+                    userInput.value = "";
+
+                    try {
+                        const res = await fetch(`${BACKEND_URL}/api/chat`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ message })
+                        });
+
+                        if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+
+                        const data = await res.json();
+                        const reply = data.reply || "Aurora está pensando... 🌌";
+
+                        chatBox.innerHTML += `<p class="bot"><b>Aurora:</b> ${reply}</p>`;
+                        chatBox.scrollTop = chatBox.scrollHeight;
+
+                        // ✨ Animación del avatar
+                        avatar.classList.add("active");
+                        setTimeout(() => avatar.classList.remove("active"), 1500);
+
+                        // 🔊 Voz femenina (lector de Aurora)
+                        const utterance = new SpeechSynthesisUtterance(reply);
+                        utterance.lang = "es-ES";
+                        utterance.pitch = 1.2;
+                        utterance.rate = 1;
+                        const voices = speechSynthesis.getVoices();
+                        const voice = voices.find(v => v.name.includes("Google español") || v.name.includes("Helena"));
+                        if (voice) utterance.voice = voice;
+                        speechSynthesis.speak(utterance);
+                    } catch (error) {
+                        console.error("❌ Error al conectar con Aurora:", error);
+                        chatBox.innerHTML += `<p class="bot" style="color:red;">⚠️ Error al conectar con Aurora.</p>`;
+                    }
+                });
+
+                // Permitir enviar con Enter
+                userInput.addEventListener("keypress", e => {
+                    if (e.key === "Enter") sendBtn.click();
+                });
+            }, 300);
         }
     });
 });
