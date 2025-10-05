@@ -68,12 +68,15 @@ async function loadHome() {
             `;
         }
     } catch (err) {
-        console.error("❌ Error al conectar con Aurora:", err);
-        document.getElementById("aurora-tips").innerHTML = `
-            <h3>💡 Consejos de Aurora</h3>
-            <p style="color:red;">❌ Error al conectar con Aurora</p>
-        `;
-    }
+    console.error("❌ Error al conectar con Aurora:", err);
+    document.getElementById("aurora-tips").innerHTML = `
+        <h3>💡 Consejos de Aurora</h3>
+        <p style="color:red;">❌ Error al conectar con Aurora.</p>
+        <small>URL: ${BACKEND_URL}/api/aurora_tips</small>
+        <br><small>${err.message || "Sin detalles del error."}</small>
+    `;
+}
+
 
     // === Mapa urbano ===
     setTimeout(() => {
