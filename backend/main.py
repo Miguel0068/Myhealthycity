@@ -1,61 +1,52 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import openai
 import os
 
-# === Configuración base ===
 app = Flask(__name__)
 CORS(app)
 
-# === Diagnóstico básico ===
-if os.getenv("OPENAI_API_KEY"):
-    print("🔑 OPENAI_API_KEY detectada correctamente ✅")
-else:
-    print("⚠️ Variable OPENAI_API_KEY no encontrada (modo sin IA)")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# === Ruta raíz ===
-@app.route("/")
+@app.route('/')
 def home():
-    return jsonify({"message": "✅ Backend de MyHealthyCity activo"})
+    return jsonify({"message": "✅ Backend running correctly!"})
 
-# === Datos simulados de ciudad ===
-@app.route("/api/data")
+@app.route('/api/data')
 def get_data():
-    return jsonify({
+    data = {
+        "status": "success",
         "info": {
-            "temperature": 23,
+            "temperature": 22,
             "air_quality": "Buena",
-            "traffic_level": "Fluido"
+            "traffic_level": "Moderado"
         }
-    })
+    }
+    return jsonify(data)
 
-# === Consejos fijos de Aurora (modo sin conexión IA) ===
-@app.route("/api/aurora_tips")
-def aurora_tips():
-    consejos = [
-        "🌳 Planta un árbol y regálale sombra al futuro.",
-        "🚶 Camina más, tu ciudad y tu cuerpo lo agradecerán.",
-        "💧 Usa el agua con conciencia, cada gota cuenta.",
-        "🚲 Muévete en bici, respira mejor y ayuda al planeta."
-    ]
-    return jsonify({"tips": consejos})
+@app.route('/api/chat', methods=['POST'])
+def chat_micity():
+    try:
+        user_input = request.json.get("message")
+        if not user_input:
+            return jsonify({"error": "Mensaje vacío"}), 400
 
-# === Chat Aurora (modo básico, sin OpenAI) ===
-@app.route("/api/chat", methods=["POST"])
-def chat():
-    data = request.get_json()
-    user_message = data.get("message", "").lower()
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": (
+                    "Eres Micity, un asistente experto en sostenibilidad, movilidad urbana, medio ambiente y salud pública. "
+                    "Tu tono es amable, educativo y claro. Ofreces consejos prácticos para mejorar la calidad de vida en las ciudades."
+                )},
+                {"role": "user", "content": user_input}
+            ]
+        )
 
-    if "hola" in user_message:
-        reply = "¡Hola! Soy Aurora 🌤️, tu guía urbana sostenible. ¿Cómo puedo ayudarte hoy?"
-    elif "clima" in user_message:
-        reply = "Parece un buen día para salir 🌞. Temperatura actual: 23°C, aire de buena calidad."
-    elif "movilidad" in user_message:
-        reply = "La movilidad fluida ayuda a todos 🚗💨. ¡Evita las horas punta cuando puedas!"
-    else:
-        reply = "Aurora aún está aprendiendo, pero te escucha con atención 🌱."
-    
-    return jsonify({"reply": reply})
+        reply = completion.choices[0].message["content"]
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
-# === Ejecución local / Render ===
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
