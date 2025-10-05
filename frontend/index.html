@@ -43,12 +43,11 @@
 
         <!-- 💡 CONTENIDO PRINCIPAL -->
         <main class="main-content" id="main-content">
-            <!-- DASHBOARD HOME -->
             <section class="welcome">
                 <h1>🏙️ Bienvenido a <span>My Healthy City</span></h1>
                 <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles impulsadas por IA.</p>
 
-                <!-- 🧠 AURORA -->
+                <!-- 🤖 AURORA -->
                 <div class="data-card">
                     <h3>🤖 Aurora – Asistente urbano inteligente</h3>
                     <p style="margin-bottom: 10px; color: var(--text-color);">
@@ -93,27 +92,20 @@
         });
     </script>
 
-    <!-- 🗺️ Inicialización de mapa en Home -->
+    <!-- 🗺️ Mapa inicial centrado en Riobamba -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const map = L.map('map-preview').setView([0, 0], 13);
+            const map = L.map('map-preview').setView([-1.664, -78.654], 13); // Riobamba, Ecuador
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const lat = pos.coords.latitude;
-                    const lon = pos.coords.longitude;
-                    map.setView([lat, lon], 14);
-                    L.marker([lat, lon])
-                        .addTo(map)
-                        .bindPopup("📍 Tu ubicación")
-                        .openPopup();
-                });
-            }
+            L.marker([-1.664, -78.654])
+                .addTo(map)
+                .bindPopup("📍 Riobamba, Ecuador")
+                .openPopup();
         });
     </script>
 </body>
