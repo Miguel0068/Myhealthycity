@@ -4,8 +4,16 @@ from openai import OpenAI
 import os
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://myhealthycity.vercel.app",
+            "http://localhost:3000"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 # === Diagnóstico inicial ===
 if os.getenv("OPENAI_API_KEY"):
     print("🔑 OPENAI_API_KEY detectada correctamente ✅")
