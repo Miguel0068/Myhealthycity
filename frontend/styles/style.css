@@ -266,3 +266,73 @@ footer {
         padding: 25px;
     }
 }
+
+/* === AURORA MODULE === */
+.aurora-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.aurora-circle {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #aeefff, #0077ff);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.25);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: 0.3s;
+}
+.aurora-circle.active {
+  box-shadow: 0 0 40px rgba(0, 150, 255, 0.6);
+  transform: scale(1.05);
+}
+.aurora-light {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.4), transparent 60%);
+  animation: swirl 10s infinite linear;
+  opacity: 0.7;
+  filter: blur(15px);
+}
+.aurora-light.a2 {
+  background: radial-gradient(circle, rgba(0, 150, 255, 0.4), transparent 60%);
+  animation-direction: reverse;
+  animation-duration: 14s;
+}
+.aurora-light.a3 {
+  background: radial-gradient(circle, rgba(0, 255, 180, 0.4), transparent 60%);
+  animation-duration: 18s;
+}
+@keyframes swirl {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Chat burbujas */
+.user, .bot {
+  display: block;
+  margin: 10px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  max-width: 80%;
+  animation: fadeIn 0.3s ease-in;
+}
+.user {
+  background: #dcefff;
+  color: #000;
+  margin-left: auto;
+  text-align: right;
+}
+.bot {
+  background: #f2f2f2;
+  color: #111;
+  margin-right: auto;
+  text-align: left;
+}
