@@ -83,7 +83,7 @@ sections.forEach(item => {
 
         if (section === "home") return loadHome();
 
-        // === 🚲 MOVILIDAD ===
+       // === 🚲 MOVILIDAD ===
 if (section === "movilidad") {
     transitionContent(`
         <div class="data-card fade-in">
@@ -225,6 +225,71 @@ if (section === "movilidad") {
                 legend.addTo(map);
             }, 800);
         }
+// === ⚠️ INCIDENCIAS URBANAS ===
+if (section === "incidencias") {
+    transitionContent(`
+        <div class="data-card fade-in">
+            <h3>⚠️ Incidencias Urbanas</h3>
+            <p>Reporta y analiza incidencias en Riobamba, Ecuador.</p>
+            <div id="incident-map" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
+        </div>
+    `);
+
+    setTimeout(() => {
+        // Inicializa mapa centrado en Riobamba
+        const map = L.map('incident-map', { zoomControl: true }).setView([-1.6635, -78.6547], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors, estilo HOT | servido por OSM France',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Colores y tipos simulados
+        const tipos = {
+            basura:      { color: "#4CAF50", icon: "🗑️" },
+            accidente:   { color: "#F44336", icon: "🚗" },
+            cierre:      { color: "#FF9800", icon: "🚧" },
+            inseguridad: { color: "#3F51B5", icon: "🚨" }
+        };
+
+        const reportes = [
+            { lat: -1.662, lng: -78.654, tipo: "basura", lugar: "Centro Histórico" },
+            { lat: -1.669, lng: -78.663, tipo: "accidente", lugar: "Av. Celso Andrade" },
+            { lat: -1.655, lng: -78.647, tipo: "cierre", lugar: "Calle Tarqui" },
+            { lat: -1.672, lng: -78.64,  tipo: "inseguridad", lugar: "Zona Norte" }
+        ];
+
+        // Crea los pines
+        reportes.forEach(r => {
+            const t = tipos[r.tipo];
+            const marker = L.circleMarker([r.lat, r.lng], {
+                radius: 12,
+                color: "#111",
+                fillColor: t.color,
+                fillOpacity: 0.8,
+                weight: 1.5
+            }).addTo(map);
+            marker.bindPopup(`<b>${t.icon} ${r.lugar}</b><br>Tipo: ${t.tipo}<br>📅 Reporte ciudadano`);
+        });
+
+        // Leyenda
+        const legend = L.control({ position: "bottomright" });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create("div", "info legend");
+            div.style.background = "#fff";
+            div.style.padding = "10px";
+            div.style.borderRadius = "8px";
+            div.innerHTML = "<b>📊 Tipos de incidencias</b><br>";
+            Object.entries(tipos).forEach(([k, v]) => {
+                div.innerHTML += `<div style="margin-top:4px;">
+                    <span style="background:${v.color};width:14px;height:10px;display:inline-block;margin-right:5px;"></span>${v.icon} ${k.charAt(0).toUpperCase()+k.slice(1)}
+                </div>`;
+            });
+            return div;
+        };
+        legend.addTo(map);
+    }, 500);
+}
+
 
         // === 💬 AURORA ===
         if (section === "aurora") {
