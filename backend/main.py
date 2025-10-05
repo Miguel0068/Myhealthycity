@@ -1,27 +1,31 @@
+import os
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 from openai import OpenAI
-import os
+
+# ======= CONFIGURACIÓN GLOBAL =======
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+FLASK_SECRET = os.getenv("FLASK_SECRET", "dev-secret")
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = FLASK_SECRET
 
-# === Configurar CORS para permitir Vercel ===
-CORS(app, resources={r"/*": {"origins": ["https://myhealthycity.vercel.app", "*"]}})
+# Habilitar CORS completo y websockets
+CORS(app, resources={r"/*": {"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-# === Variables de entorno ===
-api_key = os.getenv("OPENAI_API_KEY")
-model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+# Cliente OpenAI persistente
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-if api_key:
-    print("🔑 OPENAI_API_KEY detectada correctamente ✅")
-else:
-    print("❌ ERROR: No se detectó OPENAI_API_KEY en Render")
-
-client = OpenAI(api_key=api_key)
-
+# ======= RUTAS PRINCIPALES =======
 @app.route("/")
 def home():
-    return jsonify({"message": "✅ Backend de MyHealthyCity activo"})
+    return jsonify({"message": "✅ Backend MyHealthyCity activo y estable"})
 
 @app.route("/api/data")
 def get_data():
@@ -35,48 +39,71 @@ def get_data():
 
 @app.route("/api/aurora_tips", methods=["GET"])
 def aurora_tips():
+    if not client:
+        return jsonify({"tips": [
+            "🌱 Cuida las áreas verdes de tu ciudad.",
+            "💧 Ahorra agua cada día.",
+            "🚲 Usa bicicleta o transporte sostenible.",
+            "🌞 Aprovecha la energía solar siempre que puedas."
+        ]})
+
     prompt = (
-        "Eres Aurora, una IA de bienestar urbano. "
-        "Da 4 consejos cortos sobre sostenibilidad, salud ambiental o bienestar urbano. "
-        "Usa emojis naturales y tono humano."
+        "Eres Aurora, una IA urbana. Da 4 consejos cortos, positivos y con emojis "
+        "sobre sostenibilidad, salud ambiental o bienestar urbano."
     )
     try:
-        response = client.chat.completions.create(
-            model=model,
+        rsp = client.chat.completions.create(
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=150,
-            temperature=0.8,
+            temperature=0.8
         )
-        text = response.choices[0].message.content.strip()
+        text = rsp.choices[0].message.content.strip()
         tips = [t.strip("-• ") for t in text.split("\n") if t.strip()]
-        print("✅ Aurora generó tips correctamente")
         return jsonify({"tips": tips})
     except Exception as e:
-        print("⚠️ Error en /api/aurora_tips:", str(e))
+        print("⚠️ Error en /api/aurora_tips:", e)
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
+    data = request.get_json() or {}
     user_message = data.get("message", "").strip()
+
     if not user_message:
         return jsonify({"reply": "⚠️ No se recibió mensaje válido."}), 400
+
+    if not client:
+        replies = [
+            "🌍 ¡Hola! Soy Aurora, tu guía hacia una ciudad más limpia 💚",
+            "💬 Recuerda usar transporte sostenible y cuidar los espacios verdes 🌿",
+            "🌞 Aprovecha la luz natural y apaga lo que no uses ⚡"
+        ]
+        from random import choice
+        return jsonify({"reply": choice(replies)})
+
     try:
-        response = client.chat.completions.create(
-            model=model,
+        rsp = client.chat.completions.create(
+            model=OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "Eres Aurora, una IA amable enfocada en ciudades saludables y sostenibles."},
                 {"role": "user", "content": user_message}
             ],
             max_tokens=150,
-            temperature=0.8,
+            temperature=0.8
         )
-        reply = response.choices[0].message.content.strip()
-        print(f"🗨️ Aurora respondió: {reply[:80]}...")
+        reply = rsp.choices[0].message.content.strip()
+        print(f"🗨️ Aurora respondió: {reply[:60]}...")
         return jsonify({"reply": reply})
     except Exception as e:
-        print("⚠️ Error en /api/chat:", str(e))
+        print("⚠️ Error en /api/chat:", e)
         return jsonify({"reply": f"Error: {str(e)}"}), 500
 
+# ======= SOCKET.IO para estabilidad =======
+@socketio.on("connect")
+def on_connect():
+    emit("server_status", {"msg": "connected", "ts": os.times()})
+
+# ======= EJECUCIÓN =======
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
