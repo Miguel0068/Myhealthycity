@@ -1,112 +1,196 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Healthy City</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ANDES CITY</title>
 
-    <!-- Fuente moderna -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Fuente -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet" />
 
-    <!-- Estilos -->
-    <link rel="stylesheet" href="styles/style.css">
+  <!-- Estilos -->
+  <link rel="stylesheet" href="styles/style.css" />
 
-    <!-- Leaflet (mapa urbano) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Ajustes mínimos de layout para tarjetas compactas (sin pisar tu CSS) -->
+  <style>
+    .cards-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:12px 0;}
+    @media (max-width:1100px){ .cards-grid{ grid-template-columns:repeat(2,1fr);} }
+    @media (max-width:640px){ .cards-grid{ grid-template-columns:1fr;} }
+    .mini-list{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+    .mini-list li{ line-height:1.45; font-size:14px; }
+    .logo .brand { margin-left:8px; }
+    .welcome h1{ margin-top:0; }
+    #map-preview{ height:360px; border-radius:12px; }
+  </style>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 
 <body>
-    <!-- 🌗 Botón de tema -->
-    <button id="theme-toggle" class="theme-btn">🌙</button>
+  <!-- 🌗 Botón de tema -->
+  <button id="theme-toggle" class="theme-btn" aria-label="Cambiar tema">🌙</button>
 
-    <div class="container">
-        <!-- 🧭 SIDEBAR -->
-        <aside class="sidebar">
-            <div class="logo">
-                <div class="logo-icon">📍</div>
-                <h2>MyHealthyCity</h2>
-            </div>
+  <div class="container">
+    <!-- 🧭 SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+        <!-- Logo dinámico claro/oscuro (si los SVG no existen, queda solo el texto) -->
+        <img class="logo-icon"
+             src="assets/logo-andes-city-light.svg"
+             data-light="assets/logo-andes-city-light.svg"
+             data-dark="assets/logo-andes-city-dark.svg"
+             alt="ANDES CITY"
+             style="height:36px; width:auto"/>
+        <h2 class="brand">ANDES CITY</h2>
+      </div>
 
-            <ul class="menu">
-                <li data-section="home" class="active">🏠 Home</li>
-                <li data-section="movilidad">🚲 Movilidad</li>
-                <li data-section="contaminacion">🌫️ Contaminación</li>
-                <li data-section="incidencias">⚠️ Incidencias</li>
-                <li data-section="aurora">💬 Aurora</li>
-            </ul>
+      <ul class="menu">
+        <li data-section="home" class="active">🏠 Home</li>
+        <li data-section="movilidad">🚲 Movilidad</li>
+        <li data-section="contaminacion">🌫️ Contaminación</li>
+        <li data-section="incidencias">⚠️ Incidencias</li>
+        <li data-section="aurora">💬 Aurora</li>
+      </ul>
 
-            <footer>
-                <p>NASA Space Apps 2025 🚀</p>
-            </footer>
-        </aside>
+      <footer>
+        <p>NASA Space Apps 2025 🚀</p>
+      </footer>
+    </aside>
 
-        <!-- 💡 CONTENIDO PRINCIPAL -->
-        <main class="main-content" id="main-content">
-            <section class="welcome">
-                <h1>🏙️ Bienvenido a <span>My Healthy City</span></h1>
-                <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles impulsadas por IA.</p>
+    <!-- 💡 CONTENIDO PRINCIPAL -->
+    <main class="main-content" id="main-content">
+      <section class="welcome">
+        <h1><span>ANDES CITY</span> — inteligencia urbana local</h1>
+        <p class="intro-text">Predicciones, avisos y mapa activo de tu ciudad en una sola vista.</p>
 
-                <!-- 🤖 AURORA -->
-                <div class="data-card">
-                    <h3>🤖 Aurora – Asistente urbano inteligente</h3>
-                    <p style="margin-bottom: 10px; color: var(--text-color);">
-                        💬 Aurora analiza tendencias ambientales, patrones urbanos y bienestar ciudadano.  
-                        Aquí tienes algunas recomendaciones generadas por su algoritmo de sostenibilidad:
-                    </p>
-                    <ul style="list-style: none; margin-top: 10px; line-height: 1.6;">
-                        <li>🌱 <b>Cuida tus espacios verdes:</b> cada planta es un pequeño pulmón para la ciudad.</li>
-                        <li>🚶‍♀️ <b>Muévete con propósito:</b> caminar o pedalear ayuda a reducir el ruido y el estrés urbano.</li>
-                        <li>💧 <b>Hidrátate y desconecta:</b> la salud mental también es parte del ecosistema.</li>
-                        <li>⚡ <b>Usa energía con conciencia:</b> apaga lo que no usas y tu ciudad te lo agradecerá.</li>
-                        <li>🌤️ <b>Recuerda:</b> incluso los satélites descansan. Desconéctate para reconectarte.</li>
-                    </ul>
-                </div>
+        <!-- 🧭 Panorama compacto -->
+        <div class="data-card">
+          <h3>🧭 Panorama de hoy</h3>
+          <div class="cards-grid">
+            <!-- Predicciones -->
+            <article class="data-card">
+              <h4>🔮 Predicciones</h4>
+              <ul id="home-predicciones" class="mini-list"></ul>
+            </article>
 
-                <!-- 📊 ESTADÍSTICAS -->
-                <div class="city-stats">
-                    <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
-                    <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
-                    <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
-                </div>
+            <!-- Avisos -->
+            <article class="data-card">
+              <h4>📣 Avisos</h4>
+              <ul id="home-avisos" class="mini-list"></ul>
+            </article>
 
-                <!-- 🗺️ MAPA -->
-                <div class="data-card">
-                    <h3>🗺️ Vista previa del mapa urbano</h3>
-                    <p>Tu ubicación aproximada y zonas urbanas activas.</p>
-                    <div id="map-preview"></div>
-                </div>
-            </section>
-        </main>
-    </div>
+            <!-- Turismo / Recomendaciones -->
+            <article class="data-card">
+              <h4>🗺️ Turismo</h4>
+              <ul id="home-turismo" class="mini-list"></ul>
+            </article>
 
-    <!-- Script principal -->
-    <script src="scripts/main.js"></script>
+            <!-- Consejos de Aurora -->
+            <article class="data-card">
+              <h4>💡 Aurora</h4>
+              <ul id="home-aurora" class="mini-list"></ul>
+            </article>
+          </div>
+        </div>
 
-    <!-- 🌗 Modo claro/oscuro -->
-    <script>
-        document.getElementById("theme-toggle").addEventListener("click", () => {
-            document.body.classList.toggle("dark-mode");
-            const isDark = document.body.classList.contains("dark-mode");
-            document.getElementById("theme-toggle").textContent = isDark ? "☀️" : "🌙";
-        });
-    </script>
+        <!-- 📊 ESTADÍSTICAS (se mantienen) -->
+        <div class="city-stats">
+          <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
+          <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
+          <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
+        </div>
 
-    <!-- 🗺️ Mapa inicial centrado en Riobamba -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const map = L.map('map-preview').setView([-1.664, -78.654], 13); // Riobamba, Ecuador
+        <!-- 🗺️ MAPA -->
+        <div class="data-card">
+          <h3>🗺️ Mapa urbano</h3>
+          <p>Tu ubicación aproximada y zonas urbanas activas.</p>
+          <div id="map-preview"></div>
+        </div>
+      </section>
+    </main>
+  </div>
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
+  <!-- Script principal (no se toca tu lógica) -->
+  <script src="scripts/main.js"></script>
 
-            L.marker([-1.664, -78.654])
-                .addTo(map)
-                .bindPopup("📍 Riobamba, Ecuador")
-                .openPopup();
-        });
-    </script>
+  <!-- 🌗 Tema claro/oscuro + sincronizar logo -->
+  <script>
+    const themeBtn = document.getElementById("theme-toggle");
+    const logoImg  = document.querySelector(".logo-icon");
+
+    function syncLogo(){
+      const isDark = document.body.classList.contains("dark-mode");
+      if (logoImg) {
+        const light = logoImg.dataset.light, dark = logoImg.dataset.dark;
+        if (light && dark) logoImg.src = isDark ? dark : light;
+      }
+      themeBtn.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    // Opcional: seguir preferencia del sistema al cargar
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.body.classList.add('dark-mode');
+    }
+
+    themeBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      syncLogo();
+    });
+    document.addEventListener("DOMContentLoaded", syncLogo);
+  </script>
+
+  <!-- 🧩 Relleno seguro de tarjetas (mock; no interfiere con tus módulos) -->
+  <script>
+    const HC = {
+      predicciones: [
+        { t: "Tráfico", d: "Congestión moderada 17:00–19:00 en Av. Unidad Nacional. Alterna: Lizarzaburu." },
+        { t: "Clima",   d: "Lluvia ligera esta noche (60%). Lleva capa si sales después de las 19:00." },
+        { t: "Aire",    d: "AQI Bueno→Moderado 06:00–09:00 cerca del terminal." }
+      ],
+      avisos: [
+        { t: "Municipalidad", d: "Cierre parcial Calle Venezuela 09:00–14:00 (mantenimiento)." },
+        { t: "Eventos",       d: "Feria de productores – Plaza Alfaro, sábado 10:00." },
+        { t: "Seguridad",     d: "Desvíos por corrida atlética domingo 07:00–10:00." }
+      ],
+      turismo: [
+        { t: "Mirador",      d: "Amanecer en mirador local (cielo despejado temprano)." },
+        { t: "Gastronomía",  d: "Mercado tradicional — hornado y jugos naturales." },
+        { t: "Cultura",      d: "Museo de la Ciudad — exposición temporal." }
+      ],
+      aurora: [
+        { t: "Consejo",  d: "Camina o pedalea en trayectos cortos: menos CO₂, más salud." },
+        { t: "Energía",  d: "Apaga dispositivos que no uses para evitar consumo fantasma." },
+        { t: "Bienestar",d: "Hidrátate y toma pausas de 5 minutos cada hora." }
+      ]
+    };
+
+    function fillMiniList(id, items){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.innerHTML = "";
+      items.forEach(x => el.insertAdjacentHTML("beforeend", `<li><b>${x.t}:</b> ${x.d}</li>`));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fillMiniList("home-predicciones", HC.predicciones);
+      fillMiniList("home-avisos", HC.avisos);
+      fillMiniList("home-turismo", HC.turismo);
+      fillMiniList("home-aurora", HC.aurora);
+    });
+  </script>
+
+  <!-- 🗺️ Mapa inicial centrado en Riobamba (igual que antes) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const map = L.map('map-preview').setView([-1.664, -78.654], 13); // Riobamba, Ecuador
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      L.marker([-1.664, -78.654]).addTo(map).bindPopup("📍 Riobamba, Ecuador").openPopup();
+    });
+  </script>
 </body>
 </html>
