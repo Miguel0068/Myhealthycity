@@ -1,122 +1,112 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Healthy City — Río Andes City</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Healthy City</title>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="" crossorigin=""/>
-  <link rel="stylesheet" href="styles/style.css">
+    <!-- Fuente moderna -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="styles/style.css">
+
+    <!-- Leaflet (mapa urbano) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
+
 <body>
-  <div id="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <img src="assets/logo.svg" alt="My Healthy City" class="logo" />
-        <span class="brand-name">My Healthy City</span>
-      </div>
+    <!-- 🌗 Botón de tema -->
+    <button id="theme-toggle" class="theme-btn">🌙</button>
 
-      <nav class="menu">
-        <button class="menu-btn active" data-target="home">Home</button>
-        <button class="menu-btn" data-target="movilidad">Movilidad</button>
-        <button class="menu-btn" data-target="contaminacion">Contaminación</button>
-        <button class="menu-btn" data-target="incidencias">Incidencias</button>
-        <button class="menu-btn" data-target="mapa">Mapa</button>
-      </nav>
-
-      <footer class="sidebar-foot">
-        <small>NASA Space Apps 2025</small>
-      </footer>
-    </aside>
-
-    <main class="main">
-      <header class="main-header">
-        <h1 id="page-title">Decisiones locales — datos urbanos</h1>
-        <p id="page-sub">Visualiza y actúa: tráfico, clima y calidad del aire.</p>
-      </header>
-
-      <section class="content" id="content-area">
-        <!-- Home -->
-        <div class="panel" id="home">
-          <div class="cards">
-            <div class="card">
-              <h3>Predicciones y recomendaciones</h3>
-              <p>Accede a predicciones locales y acciones sugeridas por Aurora.</p>
-              <button class="action" data-open-aurora>Abrir Aurora</button>
+    <div class="container">
+        <!-- 🧭 SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">📍</div>
+                <h2>MyHealthyCity</h2>
             </div>
-            <div class="card">
-              <h3>Mapa urbano</h3>
-              <p>Visualización centralizada de movilidad, clima y calidad del aire.</p>
-              <button class="action" data-goto="mapa">Ver mapa</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- Movilidad -->
-        <div class="panel hidden" id="movilidad">
-          <h2>Movilidad</h2>
-          <p>Indicadores: congestión, transporte público y eventos viales.</p>
-          <div class="module-box" id="movilidad-content">
-            <!-- contenido dinámico / gráficas / tablas -->
-            <p class="muted">Aquí irán visualizaciones de tráfico y rutas críticas.</p>
-          </div>
-          <button class="action" data-open-aurora>Preguntar a Aurora</button>
-        </div>
+            <ul class="menu">
+                <li data-section="home" class="active">🏠 Home</li>
+                <li data-section="movilidad">🚲 Movilidad</li>
+                <li data-section="contaminacion">🌫️ Contaminación</li>
+                <li data-section="incidencias">⚠️ Incidencias</li>
+                <li data-section="aurora">💬 Aurora</li>
+            </ul>
 
-        <!-- Contaminacion -->
-        <div class="panel hidden" id="contaminacion">
-          <h2>Contaminación</h2>
-          <p>Calidad del aire, estaciones, y alertas.</p>
-          <div class="module-box" id="contaminacion-content">
-            <p class="muted">Estaciones y medidas históricas.</p>
-          </div>
-          <button class="action" data-open-aurora>Preguntar a Aurora</button>
-        </div>
+            <footer>
+                <p>NASA Space Apps 2025 🚀</p>
+            </footer>
+        </aside>
 
-        <!-- Incidencias -->
-        <div class="panel hidden" id="incidencias">
-          <h2>Incidencias</h2>
-          <p>Reportes ciudadanos y gestión en tiempo real.</p>
-          <div class="module-box" id="incidencias-content">
-            <p class="muted">Lista de reportes recientes.</p>
-          </div>
-          <button class="action" data-open-aurora>Preguntar a Aurora</button>
-        </div>
+        <!-- 💡 CONTENIDO PRINCIPAL -->
+        <main class="main-content" id="main-content">
+            <section class="welcome">
+                <h1>🏙️ Bienvenido a <span>My Healthy City</span></h1>
+                <p>Explora tu ciudad inteligente, monitorea su salud y conecta con soluciones sostenibles impulsadas por IA.</p>
 
-        <!-- Mapa -->
-        <div class="panel hidden" id="mapa">
-          <h2>Mapa urbano</h2>
-          <div id="map" style="height:520px;border-radius:12px;overflow:hidden;"></div>
-          <div class="map-legend">
-            <span class="legend-item">🚦 Tráfico</span>
-            <span class="legend-item">🌤️ Clima</span>
-            <span class="legend-item">🍃 Calidad del aire</span>
-          </div>
-        </div>
-      </section>
+                <!-- 🤖 AURORA -->
+                <div class="data-card">
+                    <h3>🤖 Aurora – Asistente urbano inteligente</h3>
+                    <p style="margin-bottom: 10px; color: var(--text-color);">
+                        💬 Aurora analiza tendencias ambientales, patrones urbanos y bienestar ciudadano.  
+                        Aquí tienes algunas recomendaciones generadas por su algoritmo de sostenibilidad:
+                    </p>
+                    <ul style="list-style: none; margin-top: 10px; line-height: 1.6;">
+                        <li>🌱 <b>Cuida tus espacios verdes:</b> cada planta es un pequeño pulmón para la ciudad.</li>
+                        <li>🚶‍♀️ <b>Muévete con propósito:</b> caminar o pedalear ayuda a reducir el ruido y el estrés urbano.</li>
+                        <li>💧 <b>Hidrátate y desconecta:</b> la salud mental también es parte del ecosistema.</li>
+                        <li>⚡ <b>Usa energía con conciencia:</b> apaga lo que no usas y tu ciudad te lo agradecerá.</li>
+                        <li>🌤️ <b>Recuerda:</b> incluso los satélites descansan. Desconéctate para reconectarte.</li>
+                    </ul>
+                </div>
 
-      <!-- Aurora panel (global) -->
-      <div id="aurora-panel" class="aurora hidden" aria-hidden="true">
-        <div class="aurora-head">
-          <strong>Aurora — Asistente</strong>
-          <button id="close-aurora">&times;</button>
-        </div>
-        <div class="aurora-body">
-          <div id="aurora-messages" class="messages">
-            <div class="msg bot">Hola — soy Aurora. ¿En qué puedo ayudar?</div>
-          </div>
-        </div>
-        <div class="aurora-input">
-          <input id="aurora-text" placeholder="Pregunta a Aurora..." />
-          <button id="aurora-send">Enviar</button>
-        </div>
-      </div>
-    </main>
-  </div>
+                <!-- 📊 ESTADÍSTICAS -->
+                <div class="city-stats">
+                    <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
+                    <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
+                    <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
+                </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="" crossorigin=""></script>
-  <script src="scripts/main.js"></script>
+                <!-- 🗺️ MAPA -->
+                <div class="data-card">
+                    <h3>🗺️ Vista previa del mapa urbano</h3>
+                    <p>Tu ubicación aproximada y zonas urbanas activas.</p>
+                    <div id="map-preview"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Script principal -->
+    <script src="scripts/main.js"></script>
+
+    <!-- 🌗 Modo claro/oscuro -->
+    <script>
+        document.getElementById("theme-toggle").addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+            const isDark = document.body.classList.contains("dark-mode");
+            document.getElementById("theme-toggle").textContent = isDark ? "☀️" : "🌙";
+        });
+    </script>
+
+    <!-- 🗺️ Mapa inicial centrado en Riobamba -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const map = L.map('map-preview').setView([-1.664, -78.654], 13); // Riobamba, Ecuador
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([-1.664, -78.654])
+                .addTo(map)
+                .bindPopup("📍 Riobamba, Ecuador")
+                .openPopup();
+        });
+    </script>
 </body>
 </html>
