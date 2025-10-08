@@ -10,6 +10,7 @@ const MODULES = {
   contaminacion: "modules/contaminacion/index.html",
   incidencias:   "modules/incidencias/index.html",
   movilidad:     "modules/movilidad/index.html",
+  aurora:          "modules/aura/index.html",
 
 };
 
@@ -266,6 +267,7 @@ function navigate(section) {
   if (section === "contaminacion") return loadModuleIframe(MODULES.contaminacion, "Clima & Calidad del Aire");
   if (section === "incidencias")   return loadModuleIframe(MODULES.incidencias, "Incidencias Urbanas");
   if (section === "movilidad")     return loadModuleIframe(MODULES.movilidad, "Movilidad Urbana");
+  if (section === "aura") return loadModuleIframe(MODULES.aurora, "Aurora · Asistente Urbana");
 
   transitionContent(`<div class="data-card fade-in"><h3>${section}</h3><p class="muted">Contenido en construcción.</p></div>`);
 }
