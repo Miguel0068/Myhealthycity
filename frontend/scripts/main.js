@@ -9,6 +9,8 @@
 const MODULES = {
   contaminacion: "modules/contaminacion/index.html",
   incidencias:   "modules/incidencias/index.html",
+  movilidad:     "modules/movilidad/index.html",
+
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
