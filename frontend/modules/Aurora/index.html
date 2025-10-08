@@ -1,20 +1,23 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta name="aurora-api-base" content="https://myhealthycity.onrender.com">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Aurora · Asistente Urbana</title>
+  <title>Aurora · Smoke Test</title>
+
+  <!-- Si tu backend está en Render, puedes setearlo luego con meta:
+  <meta name="aurora-api-base" content="https://TU-BACKEND.onrender.com">
+  -->
+
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <div class="container">
     <header>
       <h1>✨ Aurora</h1>
-      <p>Tu compañera cívica: predicciones, avisos y bienestar urbano</p>
+      <p>UI de prueba (debe verse el avatar, el chat y el botón)</p>
     </header>
 
-    <!-- Avatar con efecto aurora -->
     <div id="aurora-avatar">
       <div class="aurora-circle">
         <div class="aurora-light a1"></div>
@@ -24,12 +27,12 @@
       <p class="avatar-name">Aurora</p>
     </div>
 
-    <!-- Chat -->
-    <div id="chat"></div>
+    <div id="chat" class="chat-box">
+      <p class="bot"><b>Aurora:</b> Hola 👋, esta es una UI de prueba. Si me ves, Vercel ya está sirviendo el módulo.</p>
+    </div>
 
-    <!-- Entrada -->
     <div id="input-area">
-      <input id="userInput" type="text" placeholder="Cuéntame, ¿en qué te ayudo hoy?" />
+      <input id="userInput" type="text" placeholder="Escribe algo para probar la UI…" />
       <button id="sendBtn" type="button">Enviar</button>
     </div>
   </div>
