@@ -439,9 +439,9 @@ sections.forEach(item => {
 document.addEventListener("DOMContentLoaded", loadHome);
 
 
-// ===== ANDES CITY — Canvas Logo (animado, tema-aware) =====
+// ===== ANDES CITY — Canvas Logo (picos definidos + texto auto-contrast) =====
 (function initAndesCanvasLogo() {
-  // elimina restos de imágenes antiguas si quedaron
+  // borra restos de <img> si quedaron
   document.querySelectorAll('.logo-icon').forEach(n => n.remove());
 
   const el = document.getElementById('logo-canvas');
@@ -450,7 +450,38 @@ document.addEventListener("DOMContentLoaded", loadHome);
   const ctx = el.getContext('2d');
   const DPR = window.devicePixelRatio || 1;
 
-  // Tamaño visual del canvas en la UI (sidebar)
+  // util: convierte "rgb(a)" o hex a luminancia para decidir contraste
+  function parseColorToRgb(c) {
+    if (!c) return {r: 0, g: 0, b: 0};
+    if (c.startsWith('rgb')) {
+      const [r,g,b] = c.match(/\d+/g).map(Number);
+      return {r, g, b};
+    }
+    // #rrggbb
+    if (c[0] === '#') {
+      const hex = c.length === 4
+        ? c.replace(/#(.)(.)(.)/, '#$1$1$2$2$3$3')
+        : c;
+      const int = parseInt(hex.slice(1), 16);
+      return { r: (int>>16)&255, g: (int>>8)&255, b: int&255 };
+    }
+    // fallback
+    return {r: 0, g: 0, b: 0};
+  }
+  function relLuma({r,g,b}) {
+    // luminancia relativa sRGB
+    const cv = [r,g,b].map(v=>{
+      v/=255;
+      return (v<=0.03928)? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+    });
+    return 0.2126*cv[0]+0.7152*cv[1]+0.0722*cv[2];
+  }
+  function sidebarIsDark() {
+    const sb = document.querySelector('.sidebar');
+    const bg = getComputedStyle(sb||document.body).backgroundColor;
+    return relLuma(parseColorToRgb(bg)) < 0.35; // umbral
+  }
+
   function resize() {
     const cssW = el.clientWidth || 200;
     const cssH = el.clientHeight || 90;
@@ -459,80 +490,81 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
 
-  function theme() {
-    return document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-  }
+  // animación del “shimmer”
+  let t = 0;
+  const speed = 0.018;
 
-  // Parámetros animación subrayado
-  let t = 0; // tiempo
-  const speed = 0.018; // velocidad shimmer
-
-  // Dibuja una versión más cercana a tu referencia: montañas suaves + texto + subrayado animado
   function draw() {
-    const w = el.width / DPR, h = el.height / DPR;
-    const mode = theme();
+    const w = el.width / DPR;
+    const h = el.height / DPR;
 
-    // Paleta
-    const ink      = (mode === 'dark') ? '#ECECEC' : '#171717';   // texto
-    const strokes  = (mode === 'dark') ? '#EDEDED' : '#1E1E1E';   // contorno montañas
-    const baseLine = (mode === 'dark') ? '#EDEDED' : '#6BA0B5';   // extremo del gradiente
-    const glowA    = '#7ED0FF'; // azul
-    const glowB    = '#9AF5E3'; // turquesa
+    // colores según contraste real del sidebar
+    const darkBg = sidebarIsDark();
+    const ink      = darkBg ? '#ECECEC' : '#171717'; // texto
+    const strokes  = darkBg ? '#EFEFEF' : '#1E1E1E'; // montañas
+    const baseLine = darkBg ? '#EFEFEF' : '#6BA0B5'; // extremo del gradiente
+    const glowA    = '#7ED0FF';
+    const glowB    = '#9AF5E3';
 
-    // Clear
     ctx.clearRect(0, 0, w, h);
+    ctx.save();
 
-    // ===== Montañas (curvas suaves tipo nevado) =====
-    const yBase = h * 0.42;
-    ctx.lineWidth = 2.6;
+    // ===== 2 picos con relieve más “nevado” =====
+    const yBase = h * 0.44;
+    ctx.lineWidth = 2.8;
     ctx.lineJoin = 'round';
     ctx.lineCap  = 'round';
     ctx.strokeStyle = strokes;
 
+    // Silueta principal (pico izquierdo suave + pico derecho más alto)
     ctx.beginPath();
-    // Arranque suave izquierda
-    ctx.moveTo(w * 0.06, yBase + h * 0.02);
-    // Pico 1
-    ctx.bezierCurveTo(w*0.18, yBase - h*0.12, w*0.26, yBase - h*0.22, w*0.36, yBase - h*0.08);
-    // Valle
-    ctx.bezierCurveTo(w*0.42, yBase - h*0.02, w*0.45, yBase,           w*0.50, yBase - h*0.04);
-    // Pico 2 (más alto)
-    ctx.bezierCurveTo(w*0.60, yBase - h*0.22, w*0.68, yBase - h*0.16,  w*0.76, yBase - h*0.06);
-    // Salida derecha
-    ctx.bezierCurveTo(w*0.86, yBase,           w*0.92, yBase - h*0.02, w*0.96, yBase - h*0.08);
+    ctx.moveTo(w*0.05, yBase + h*0.03);
+    // subida al pico 1
+    ctx.bezierCurveTo(w*0.16, yBase - h*0.12, w*0.24, yBase - h*0.18, w*0.33, yBase - h*0.08);
+    // bajada a valle
+    ctx.bezierCurveTo(w*0.38, yBase - h*0.02, w*0.43, yBase + h*0.01, w*0.48, yBase - h*0.02);
+    // subida pico 2 (más agudo)
+    ctx.bezierCurveTo(w*0.58, yBase - h*0.24, w*0.67, yBase - h*0.20, w*0.74, yBase - h*0.10);
+    // salida derecha
+    ctx.bezierCurveTo(w*0.86, yBase - h*0.02, w*0.92, yBase - h*0.04, w*0.96, yBase - h*0.08);
     ctx.stroke();
 
-    // Pequeño “nieve/lomo” en el segundo pico (detalle)
+    // Cresta “nevado” del pico derecho
     ctx.beginPath();
-    ctx.moveTo(w*0.62, yBase - h*0.19);
-    ctx.quadraticCurveTo(w*0.66, yBase - h*0.15, w*0.69, yBase - h*0.12);
+    ctx.moveTo(w*0.60, yBase - h*0.19);
+    ctx.quadraticCurveTo(w*0.645, yBase - h*0.155, w*0.69, yBase - h*0.125);
     ctx.stroke();
 
-    // ===== Texto “ANDES CITY” (elegante, tracking suave) =====
+    ctx.restore();
+
+    // ===== Texto marca (elegante) =====
+    ctx.save();
     ctx.fillStyle = ink;
+    ctx.shadowBlur = 0; // asegura sin brillo en texto
     ctx.font = '700 20px "Inter Tight", "Outfit", system-ui, sans-serif';
     ctx.textBaseline = 'top';
 
     const title = 'ANDES CITY';
     const startX = w * 0.10;
-    let x = startX, yText = h * 0.57;
-    const track = 1.8; // separación entre letras
+    let x = startX, yText = h * 0.60;
+    const track = 1.8; // interletra
 
     for (const ch of title) {
       ctx.fillText(ch, x, yText);
       x += ctx.measureText(ch).width + track + (ch === ' ' ? 6 : 0);
     }
+    ctx.restore();
 
-    // ===== Subrayado degradado ANIMADO + glow central =====
+    // ===== Subrayado degradado + shimmer animado =====
     const ulY = yText + 24;
-    const ulL = startX, ulR = Math.min(w * 0.90, x); // hasta el final del texto
+    const ulL = startX;
+    const ulR = Math.min(w * 0.92, x);
 
-    // Gradiente base (estático)
+    // línea base
     const grad = ctx.createLinearGradient(ulL, 0, ulR, 0);
     grad.addColorStop(0.00, glowB);
     grad.addColorStop(0.50, glowA);
     grad.addColorStop(1.00, baseLine);
-
     ctx.lineWidth = 1.8;
     ctx.strokeStyle = grad;
     ctx.beginPath();
@@ -540,50 +572,45 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ctx.lineTo(ulR, ulY);
     ctx.stroke();
 
-    // Shimmer animado: una banda que “recorre” el subrayado
-    const bandWidth = Math.max(24, (ulR - ulL) * 0.12);
-    const cx = ulL + ((Math.sin(t) + 1) / 2) * (ulR - ulL - bandWidth) + bandWidth/2;
+    // shimmer
+    const band = Math.max(24, (ulR-ulL)*0.12);
+    const cx = ulL + ((Math.sin(t) + 1) / 2) * (ulR - ulL - band) + band/2;
 
-    const grad2 = ctx.createRadialGradient(cx, ulY, 0, cx, ulY, bandWidth/2);
-    grad2.addColorStop(0.0, mode === 'dark' ? 'rgba(126,208,255,0.75)' : 'rgba(126,208,255,0.9)');
+    const grad2 = ctx.createRadialGradient(cx, ulY, 0, cx, ulY, band/2);
+    grad2.addColorStop(0.0, darkBg ? 'rgba(126,208,255,0.75)' : 'rgba(126,208,255,0.9)');
     grad2.addColorStop(1.0, 'rgba(126,208,255,0)');
     ctx.fillStyle = grad2;
-    ctx.fillRect(cx - bandWidth/2, ulY - 6, bandWidth, 12);
+    ctx.fillRect(cx - band/2, ulY - 6, band, 12);
 
-    // Punto de glow en el centro animado
+    // punto glow
     ctx.save();
-    ctx.shadowColor = mode === 'dark' ? 'rgba(126,208,255,0.55)' : 'rgba(126,208,255,0.75)';
+    ctx.shadowColor = darkBg ? 'rgba(126,208,255,0.55)' : 'rgba(126,208,255,0.75)';
     ctx.shadowBlur = 16;
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.arc(cx, ulY, 2.4, 0, Math.PI * 2);
+    ctx.arc(cx, ulY, 2.4, 0, Math.PI*2);
     ctx.fill();
     ctx.restore();
   }
 
-  function loop() {
-    t += speed;
-    draw();
-    requestAnimationFrame(loop);
-  }
+  function loop() { t += speed; draw(); requestAnimationFrame(loop); }
 
-  // Redraw en cambios de tema y resize
+  // redibuja al cambiar clase (tema) y al redimensionar
   const obs = new MutationObserver(() => draw());
   obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', () => { resize(); draw(); });
 
-  // Primer render
+  // arranque
   function start() {
-    // Asegura tamaño CSS si no lo pusiste aún
-    if (!el.style.width)  el.style.width  = '200px';
-    if (!el.style.height) el.style.height = '90px';
+    // tamaño “visual” del canvas (puedes ampliar)
+    const s = el.style;
+    if (!s.width)  s.width  = '200px';
+    if (!s.height) s.height = '90px';
     resize();
     draw();
     loop();
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
-  }
+  (document.readyState === 'loading')
+    ? document.addEventListener('DOMContentLoaded', start)
+    : start();
 })();
