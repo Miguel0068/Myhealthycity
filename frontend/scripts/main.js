@@ -439,87 +439,115 @@ sections.forEach(item => {
 document.addEventListener("DOMContentLoaded", loadHome);
 
 
-// ====== THEME + LOGO MANAGER (robusto, sin choques) ======
-(function () {
-  if (window.__ANDES_THEME_INIT__) return; // evita doble init
-  window.__ANDES_THEME_INIT__ = true;
+// ===== Canvas Logo (ANDES CITY) — sin SVG, reactivo al tema =====
+(function initCanvasLogo() {
+  const el = document.getElementById('logo-canvas');
+  if (!el) return;
+  const ctx = el.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
 
-  function qs(sel) { return document.querySelector(sel); }
-
-  function applyTheme(mode) {
-    document.body.classList.toggle("dark-mode", mode === "dark");
-    const btn = qs("#theme-toggle");
-    if (btn) btn.textContent = (mode === "dark") ? "☀️" : "🌙";
-    syncLogo(); // siempre sincroniza el logo
-    try { localStorage.setItem("theme", mode); } catch {}
+  function theme() {
+    return document.body.classList.contains('dark-mode') ? 'dark' : 'light';
   }
 
-  function currentMode() {
-    return document.body.classList.contains("dark-mode") ? "dark" : "light";
+  function resize() {
+    const cssW = el.clientWidth || 180;
+    const cssH = el.clientHeight || 80;
+    el.width = Math.round(cssW * DPR);
+    el.height = Math.round(cssH * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    draw();
   }
 
-  function detectInitialMode() {
-    // 1) preferencia guardada
-    try {
-      const saved = localStorage.getItem("theme");
-      if (saved === "dark" || saved === "light") return saved;
-    } catch {}
-    // 2) preferencia del sistema
-    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-    // 3) por defecto claro (cámbialo a "dark" si prefieres)
-    return "light";
-  }
+  function draw() {
+    const w = el.width / DPR, h = el.height / DPR;
+    const mode = theme();
 
-  function syncLogo() {
-    const img = qs(".logo-icon");
-    if (!img) return;
-    const isDark = document.body.classList.contains("dark-mode");
-    const light = img.getAttribute("data-light");
-    const dark  = img.getAttribute("data-dark");
+    // Paleta
+    const colInk   = (mode === 'dark') ? '#ECECEC' : '#151515';
+    const colLine1 = (mode === 'dark') ? '#ECECEC' : '#1E1E1E';
+    const glowA = 'rgba(126, 208, 255, 1)';  // azul
+    const glowB = 'rgba(154, 245, 227, 1)';  // turquesa
 
-    // Si hay rutas válidas, úsalas; si no, no cambies src
-    if (light && dark) {
-      const nextSrc = isDark ? dark : light;
-      if (img.src !== location.origin + "/" + nextSrc && !img.src.endsWith(nextSrc)) {
-        img.style.opacity = "0";
-        // Fallback: si falla la carga, oculto la imagen y muestro el título
-        img.onerror = () => {
-          img.style.display = "none";
-          const brand = qs(".logo .brand");
-          if (brand) brand.style.display = "block";
-        };
-        img.onload = () => { img.style.opacity = "1"; };
-        img.src = nextSrc;
-      }
-    }
-  }
+    // Clear
+    ctx.clearRect(0, 0, w, h);
 
-  function initThemeAndLogo() {
-    // Asegurar que el título esté visible si no hay imagen
-    const brand = qs(".logo .brand");
-    if (brand) brand.style.display = "block";
+    // —— Montañas (líneas) ——
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap  = 'round';
+    ctx.strokeStyle = colLine1;
 
-    // Aplica el modo inicial
-    applyTheme(detectInitialMode());
+    // Coordenadas relativas
+    const yBase = h * 0.40;
+    const x0 = w * 0.10, x1 = w * 0.90;
 
-    // Listener del botón con capture para evitar choques con otros scripts
-    const btn = qs("#theme-toggle");
-    if (btn) {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopImmediatePropagation(); // neutraliza listeners previos conflictivos
-        applyTheme(currentMode() === "dark" ? "light" : "dark");
-      }, { capture: true });
+    ctx.beginPath();
+    // pico izquierdo
+    ctx.moveTo(x0, yBase);
+    ctx.quadraticCurveTo(w*0.28, yBase - h*0.20, w*0.40, yBase);
+    // pico derecho
+    ctx.quadraticCurveTo(w*0.55, yBase - h*0.24, w*0.72, yBase - h*0.06);
+    ctx.quadraticCurveTo(w*0.80, yBase - h*0.02, x1, yBase - h*0.10);
+    ctx.stroke();
+
+    // —— Texto "ANDES CITY" (tracking manual suave) ——
+    const title = 'ANDES CITY';
+    ctx.fillStyle = colInk;
+    ctx.font = '700 18px "Inter Tight", "Outfit", system-ui, sans-serif';
+    ctx.textBaseline = 'top';
+
+    // cálculo de tracking simple
+    const startX = w * 0.10;
+    let cursorX = startX, yText = h * 0.55;
+    const track = 1.5; // espacio extra entre letras
+
+    for (const ch of title) {
+      ctx.fillText(ch, cursorX, yText);
+      const m = ctx.measureText(ch);
+      cursorX += m.width + track + (ch === ' ' ? 6 : 0);
     }
 
-    // Por si el inline script cambió algo antes:
-    setTimeout(syncLogo, 0);
+    // —— Subrayado con gradiente + glow en el centro ——
+    const ulY = yText + 22;
+    const ulL = startX, ulR = w * 0.88;
+
+    // línea base
+    ctx.lineWidth = 1.5;
+    const grad = ctx.createLinearGradient(ulL, 0, ulR, 0);
+    grad.addColorStop(0.0, glowB);
+    grad.addColorStop(0.5, glowA);
+    grad.addColorStop(1.0, (mode === 'dark') ? '#EDEDED' : '#6BA0B5');
+    ctx.strokeStyle = grad;
+
+    ctx.beginPath();
+    ctx.moveTo(ulL, ulY);
+    ctx.lineTo(ulR, ulY);
+    ctx.stroke();
+
+    // glow puntiforme en el centro
+    const cx = (ulL + ulR) / 2;
+    ctx.save();
+    ctx.shadowColor = (mode === 'dark') ? 'rgba(126,208,255,0.55)' : 'rgba(126,208,255,0.75)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(cx, ulY, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
-  // Ejecuta cuando el DOM esté listo
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initThemeAndLogo);
+  // Redibuja cuando cambia el tema (observa clase del body)
+  const obs = new MutationObserver(() => draw());
+  obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  // Redibuja en resize
+  window.addEventListener('resize', resize);
+
+  // Primer render
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', resize);
   } else {
-    initThemeAndLogo();
+    resize();
   }
 })();
