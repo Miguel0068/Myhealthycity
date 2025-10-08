@@ -450,11 +450,12 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
 /* ==================================================
-   AURORA CHAT WIDGET (flotante, en todos los módulos)
+   AURORA CHAT WIDGET (flotante mejorado)
    ================================================== */
 (function initAuroraWidget(){
   const API_BASE = window.AURORA_API_BASE || document.querySelector('meta[name="aurora-api-base"]')?.content || "";
 
+  // === Estilos ===
   const css = `
   .aur-float-btn{
     position:fixed; bottom:24px; right:24px; z-index:9999;
@@ -469,7 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   .aur-panel{
     position:fixed; bottom:100px; right:30px; z-index:9998;
-    width:320px; max-height:450px;
+    width:320px; max-height:460px;
     background:#fff; border-radius:16px;
     box-shadow:0 8px 32px rgba(0,0,0,.25);
     display:none; flex-direction:column; overflow:hidden;
@@ -490,12 +491,14 @@ document.addEventListener("DOMContentLoaded", () => {
   .aur-input button{ background:#0077ff; border:none; color:#fff; padding:0 14px; border-radius:8px; cursor:pointer; font-weight:600; }
   .aur-input button:hover{ background:#005ec2; }
   `;
-  const style = document.createElement("style");
-  style.id = "aurora-widget-styles";
-  style.textContent = css;
-  document.head.appendChild(style);
+  if(!document.getElementById("aurora-widget-styles")){
+    const style = document.createElement("style");
+    style.id = "aurora-widget-styles";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
 
-  // contenedor
+  // === Estructura del widget ===
   const btn = document.createElement("div");
   btn.className = "aur-float-btn";
   btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-9.95 9.1 9.5 9.5 0 0 0 3.59 8L4 22l3.06-1.65A9.94 9.94 0 0 0 12 22a10 10 0 0 0 0-20zm0 18a8 8 0 0 1-4.39-1.28l-.31-.19L6 19l.45-1.25-.48-.37A7.5 7.5 0 0 1 12 4.5 7.5 7.5 0 0 1 12 20zm-1-8h2v2h-2v-2zm0-5h2v4h-2V7z"/></svg>`;
@@ -506,7 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
   panel.innerHTML = `
     <div class="aur-head">💬 Aurora</div>
     <div class="aur-chat" id="aur-chatbox">
-      <div class="aur-msg bot"><b>Aurora:</b> ¡Hola! Soy Aurora 🌿 ¿en qué puedo ayudarte?</div>
+      <div class="aur-msg bot"><b>Aurora:</b> ¡Hola! Soy Aurora 🌿 ¿en qué puedo ayudarte hoy?</div>
     </div>
     <div class="aur-input">
       <input id="aur-input" type="text" placeholder="Escribe un mensaje...">
@@ -515,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
   document.body.appendChild(panel);
 
-  // eventos
+  // === Funciones ===
   btn.addEventListener("click", ()=> panel.classList.toggle("active"));
   const chatbox = panel.querySelector("#aur-chatbox");
   const input = panel.querySelector("#aur-input");
@@ -529,6 +532,14 @@ document.addEventListener("DOMContentLoaded", () => {
     chatbox.scrollTop = chatbox.scrollHeight;
   }
 
+  // 💡 respuestas simuladas de respaldo
+  const fallbackReplies = [
+    "💡 No pude obtener respuesta del servidor, pero estoy aquí para ayudarte.",
+    "🌸 Hoy el aire se siente tranquilo. Recuerda hidratarte y cuidar tu entorno.",
+    "🚴‍♀️ Si sales, revisa el tráfico antes de moverte por la ciudad.",
+    "🌿 Estoy teniendo problemas para conectarme al servidor, intenta de nuevo en unos minutos."
+  ];
+
   async function send(){
     const text = input.value.trim();
     if(!text) return;
@@ -536,17 +547,35 @@ document.addEventListener("DOMContentLoaded", () => {
     input.value = "";
 
     try{
+      if(!API_BASE){
+        // sin backend → respuesta simulada
+        const fake = fallbackReplies[Math.floor(Math.random()*fallbackReplies.length)];
+        push("bot", fake);
+        return;
+      }
+
+      // consulta real al backend
       const res = await fetch(`${API_BASE}/api/chat`, {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ message: text })
       });
+
       const data = await res.json();
-      push("bot", data.reply || "No recibí respuesta.");
+      let reply = data?.reply?.trim();
+
+      if(!reply || reply.toLowerCase().includes("no tengo") || reply.toLowerCase().includes("sin respuesta")){
+        reply = fallbackReplies[Math.floor(Math.random()*fallbackReplies.length)];
+      }
+
+      push("bot", reply);
+
     }catch(err){
-      push("bot", "⚠️ Error al conectar con el servidor.");
+      const fake = fallbackReplies[Math.floor(Math.random()*fallbackReplies.length)];
+      push("bot", fake + " (⚠️ error de conexión)");
     }
   }
+
   sendBtn.addEventListener("click", send);
   input.addEventListener("keydown", e=>{ if(e.key==="Enter") send(); });
 })();
