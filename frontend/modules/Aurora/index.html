@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aurora · Asistente Urbana</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>✨ Aurora</h1>
+      <p>Tu compañera cívica: predicciones, avisos y bienestar urbano</p>
+    </header>
+
+    <!-- Avatar con efecto aurora -->
+    <div id="aurora-avatar">
+      <div class="aurora-circle">
+        <div class="aurora-light a1"></div>
+        <div class="aurora-light a2"></div>
+        <div class="aurora-light a3"></div>
+      </div>
+      <p class="avatar-name">Aurora</p>
+    </div>
+
+    <!-- Chat -->
+    <div id="chat"></div>
+
+    <!-- Entrada -->
+    <div id="input-area">
+      <input id="userInput" type="text" placeholder="Cuéntame, ¿en qué te ayudo hoy?" />
+      <button id="sendBtn" type="button">Enviar</button>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
