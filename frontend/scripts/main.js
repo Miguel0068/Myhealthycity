@@ -44,21 +44,65 @@ new MutationObserver(syncThemeToIframes).observe(document.body, {
 function loadHome() {
   transitionContent(`
     <section class="welcome fade-in">
-      <div class="logo"><!-- tu logo/animación aparecerá aquí vía ui-legacy.js --></div>
-      <h2 class="brand-title">🏙️ <span class="brand-accent">Andes City</span></h2>
-      <p class="brand-subtitle">Panel principal</p>
-      <div class="data-card">
-        <h3>Recomendaciones</h3>
-        <ul id="recomendaciones" class="mini-list"></ul>
+      <!-- 🔒 Zona protegida: el legacy solo puede dibujar dentro de #legacy-root -->
+      <div id="legacy-root">
+        <div class="logo"><!-- UI legacy puede decorar aquí --></div>
+        <h2 class="brand-title">🏙️ <span class="brand-accent">Andes City</span></h2>
+        <p class="brand-subtitle">Panel principal</p>
+        <div class="data-card">
+          <h3>Recomendaciones</h3>
+          <ul id="recomendaciones" class="mini-list"></ul>
+        </div>
       </div>
     </section>
   `, () => {
-    // Avisar a la capa de UI que el HOME ya montó
+    console.info("[Router] HOME montado");
+    // Señal para UI legacy
     document.dispatchEvent(new CustomEvent("andes:home-mounted"));
-    // Cargar tu UI vieja (solo una vez)
-    injectLegacyUI();
+    // Cargar/forzar legacy
+    injectLegacyUI(true);
+    // Activar el escudo anti-clobber
+    enableAntiClobberShield();
   });
 }
+
+
+// === Escudo anti-clobber: evita que ui-legacy.js u otros sobrescriban #main-content ===
+let __ROUTER_WRITING__ = false;
+function enableAntiClobberShield() {
+  const host = document.getElementById("main-content");
+  if (!host || host.__shieldOn) return;
+
+  // Marca para saber que el router está escribiendo legítimamente
+  const _transitionContent = window.transitionContent;
+  window.transitionContent = function (html, after) {
+    __ROUTER_WRITING__ = true;
+    _transitionContent(html, () => {
+      __ROUTER_WRITING__ = false;
+      if (typeof after === "function") after();
+    });
+  };
+
+  // Observa cambios extraños en main-content
+  const observer = new MutationObserver((muts) => {
+    if (__ROUTER_WRITING__) return; // cambios válidos del router
+    // Si el HOME está activo, exigimos que siga existiendo #legacy-root
+    const isHome = document.querySelector('.menu li.active[data-section="home"]');
+    if (isHome) {
+      const legacyRoot = document.getElementById("legacy-root");
+      if (!legacyRoot) {
+        console.warn("[Shield] Otro script intentó reemplazar #main-content en HOME. Restauro UI.");
+        // Volver a montar el Home del router sin perder navegación
+        loadHome();
+      }
+    }
+  });
+  observer.observe(host, { childList: true, subtree: true });
+  host.__shieldOn = true;
+}
+
+
+
 
 // ====== Iframe para módulos ======
 function calcModuleHeight() {
@@ -141,22 +185,52 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ====== Carga dinámica de tu UI vieja (una vez) ======
-let legacyLoaded = false;
-function injectLegacyUI() {
-  if (legacyLoaded) return;
-  legacyLoaded = true;
+let legacyLoaded = false, legacyTried = false;
+function injectLegacyUI(forceInit = false) {
+  const target = document.getElementById("legacy-root");
+  // 👉 damos al legacy un objetivo claro (dentro del Home)
+  window.__LEGACY_TARGET__ = target || null;
+
+  if (legacyLoaded) { safeLegacyInit(); return; }
+  if (legacyTried)  { safeLegacyInit(); return; }
+  legacyTried = true;
+
   const s = document.createElement("script");
-  s.src = s.src = "frontend/scripts/ui-legacy.js"; // <-- AQUÍ va tu archivo viejo (renombrado)
-                                                       
+  // 🔧 AJUSTA ESTA RUTA si es necesario:
+  s.src = "scripts/ui-legacy.js";
   s.async = true;
-  s.onload = () => {
-    // Si tu archivo define una init explícita, la llamamos:
-    if (window.AndesLegacyUI && typeof window.AndesLegacyUI.init === "function") {
-      window.AndesLegacyUI.init();
-    }
-  };
+  s.onload = () => { legacyLoaded = true; console.info("[Router] ui-legacy cargado OK"); safeLegacyInit(); };
+  s.onerror = (e) => { console.error("[Router] ui-legacy NO cargó (ruta?)", e); };
   document.head.appendChild(s);
+
+  setTimeout(safeLegacyInit, 1500);
+
+  function safeLegacyInit(){
+    try {
+      // Si el legacy expone una init, pásale el target seguro
+      if (window.AndesLegacyUI && typeof window.AndesLegacyUI.init === "function") {
+        window.AndesLegacyUI.init(window.__LEGACY_TARGET__);
+        console.info("[Router] AndesLegacyUI.init() llamado");
+      }
+      // Fallback mínimo si el legacy no pinta nada
+      const logo = document.querySelector("#legacy-root .logo");
+      const recs = document.querySelector("#legacy-root #recomendaciones");
+      if (logo && !logo.classList.contains("decorate-ready")) {
+        logo.classList.add("decorate-ready", "animate");
+      }
+      if (recs && recs.children.length === 0) {
+        recs.innerHTML = `
+          <li>🌦️ Revisa la calidad del aire antes de actividades al aire libre.</li>
+          <li>🌱 Monitorea la humedad del suelo en Agro.</li>
+          <li>🌓 Activa modo oscuro por la noche.</li>`;
+      }
+      window.__legacyOK = true;
+    } catch (err) {
+      console.warn("[Router] init legacy falló (continuamos):", err);
+    }
+  }
 }
+
 
 // ====== Estilos mínimos si faltan ======
 (function ensureBaseStyles(){
