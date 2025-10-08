@@ -149,7 +149,192 @@
     }
 
     // Líneas de buses (definición resumida; igual que tu base)
-    const BUS_LINES = [ /* … (se mantienen todas las líneas que ya venían) … */ ];
+   // ================== Líneas de buses Riobamba ==================
+const BUS_LINES = [
+  {
+    linea_id: "L1",
+    nombre: "Línea 1: Terminal Terrestre – La Estación",
+    operador: "Trans. Riobamba 1",
+    color: "#f97316",
+    horario: "05:30–22:00",
+    frecuencia_min: 8,
+    sentido: "Norte–Sur",
+    calles: [
+      ["Terminal Terrestre", "Av. Celiano Monge", "Av. Canónigo Ramos"],
+      ["Av. Canónigo Ramos", "Av. Antonio José de Sucre", "Av. Daniel León Borja"],
+      ["Av. Daniel León Borja", "Av. La Prensa", "Av. Unidad Nacional"]
+    ]
+  },
+  {
+    linea_id: "L2",
+    nombre: "Línea 2: Parque Industrial – UEB",
+    operador: "Trans. Riobamba 2",
+    color: "#22c55e",
+    horario: "06:00–21:30",
+    frecuencia_min: 10,
+    sentido: "Sur–Centro",
+    calles: [
+      ["Av. Canónigo Ramos", "Av. Antonio José de Sucre", "Av. Unidad Nacional"],
+      ["Av. Unidad Nacional", "Av. Daniel León Borja", "Av. Celiano Monge"]
+    ]
+  },
+  {
+    linea_id: "L3",
+    nombre: "Línea 3: Mercado Mayorista – Hospital General",
+    operador: "Coop. Santa Rosa",
+    color: "#3b82f6",
+    horario: "05:45–21:45",
+    frecuencia_min: 9,
+    sentido: "Este–Oeste",
+    calles: [
+      ["Av. Celiano Monge", "Av. Daniel León Borja", "Av. La Prensa"],
+      ["Av. La Prensa", "Av. Unidad Nacional", "Av. José Veloz"]
+    ]
+  },
+  {
+    linea_id: "L4",
+    nombre: "Línea 4: Estadio Olímpico – Terminal Terrestre",
+    operador: "Coop. Chimborazo",
+    color: "#eab308",
+    horario: "05:30–22:00",
+    frecuencia_min: 7,
+    sentido: "Circular",
+    calles: [
+      ["Av. Unidad Nacional", "Av. Daniel León Borja", "Av. La Prensa"],
+      ["Av. La Prensa", "Av. Antonio José de Sucre", "Av. Celiano Monge"]
+    ]
+  },
+  {
+    linea_id: "L5",
+    nombre: "Línea 5: San Antonio – Politécnica",
+    operador: "Trans. Sultana de los Andes",
+    color: "#06b6d4",
+    horario: "05:30–21:30",
+    frecuencia_min: 12,
+    sentido: "Norte–Sur",
+    calles: [
+      ["Av. Celiano Monge", "Av. Canónigo Ramos", "Av. La Prensa"],
+      ["Av. La Prensa", "Av. Daniel León Borja", "Av. Unidad Nacional"]
+    ]
+  },
+  {
+    linea_id: "L6",
+    nombre: "Línea 6: Santa Rosa – Mercado Mayorista",
+    operador: "Trans. San Alfonso",
+    color: "#db2777",
+    horario: "05:40–21:50",
+    frecuencia_min: 11,
+    sentido: "Oeste–Este",
+    calles: [
+      ["Av. Antonio José de Sucre", "Av. Daniel León Borja", "Av. La Prensa"],
+      ["Av. La Prensa", "Av. Unidad Nacional", "Av. José Veloz"]
+    ]
+  },
+  {
+    linea_id: "L7",
+    nombre: "Línea 7: Politécnica – Urb. Bellavista",
+    operador: "Trans. Bellavista",
+    color: "#a855f7",
+    horario: "05:45–22:00",
+    frecuencia_min: 9,
+    sentido: "Este–Oeste",
+    calles: [
+      ["Av. Antonio José de Sucre", "Av. Celiano Monge", "Av. Daniel León Borja"],
+      ["Av. Daniel León Borja", "Av. La Prensa", "Av. Unidad Nacional"]
+    ]
+  },
+  {
+    linea_id: "L8",
+    nombre: "Línea 8: Mercado Mayorista – Cementerio",
+    operador: "Coop. San Pedro de Riobamba",
+    color: "#ef4444",
+    horario: "05:30–22:00",
+    frecuencia_min: 10,
+    sentido: "Circular",
+    calles: [
+      ["Av. Unidad Nacional", "Av. Daniel León Borja", "Av. Antonio José de Sucre"],
+      ["Av. Antonio José de Sucre", "Av. La Prensa", "Av. Celiano Monge"]
+    ]
+  },
+  {
+    linea_id: "L9",
+    nombre: "Línea 9: San Antonio – La Condamine",
+    operador: "Coop. Riobamba Unida",
+    color: "#f43f5e",
+    horario: "05:50–21:40",
+    frecuencia_min: 10,
+    sentido: "Norte–Sur",
+    calles: [
+      ["Av. Antonio José de Sucre", "Av. Unidad Nacional", "Av. Daniel León Borja"],
+      ["Av. Daniel León Borja", "Av. La Prensa", "Av. Canónigo Ramos"]
+    ]
+  },
+  {
+    linea_id: "L10",
+    nombre: "Línea 10: Terminal Terrestre – Universidad",
+    operador: "Trans. Chimborazo",
+    color: "#14b8a6",
+    horario: "05:45–21:30",
+    frecuencia_min: 8,
+    sentido: "Sur–Centro",
+    calles: [
+      ["Av. Canónigo Ramos", "Av. Antonio José de Sucre", "Av. Unidad Nacional"],
+      ["Av. Unidad Nacional", "Av. Daniel León Borja", "Av. La Prensa"]
+    ]
+  },
+  {
+    linea_id: "L11",
+    nombre: "Línea 11: Politécnica – Urb. San Martín",
+    operador: "Coop. Andina",
+    color: "#84cc16",
+    horario: "05:30–22:00",
+    frecuencia_min: 9,
+    sentido: "Este–Oeste",
+    calles: [
+      ["Av. Antonio José de Sucre", "Av. Unidad Nacional", "Av. Daniel León Borja"],
+      ["Av. Daniel León Borja", "Av. La Prensa", "Av. Celiano Monge"]
+    ]
+  },
+  {
+    linea_id: "L12",
+    nombre: "Línea 12: Santa Rosa – La Politécnica",
+    operador: "Coop. 24 de Mayo",
+    color: "#facc15",
+    horario: "05:50–21:40",
+    frecuencia_min: 11,
+    sentido: "Sur–Centro",
+    calles: [
+      ["Av. Celiano Monge", "Av. Antonio José de Sucre", "Av. Unidad Nacional"],
+      ["Av. Unidad Nacional", "Av. Daniel León Borja", "Av. La Prensa"]
+    ]
+  },
+  {
+    linea_id: "L13",
+    nombre: "Línea 13: Urb. Santa Teresita – La Estación",
+    operador: "Coop. Sultana",
+    color: "#f87171",
+    horario: "05:30–21:50",
+    frecuencia_min: 10,
+    sentido: "Circular",
+    calles: [
+      ["Av. Antonio José de Sucre", "Av. Unidad Nacional", "Av. Daniel León Borja"],
+      ["Av. Daniel León Borja", "Av. La Prensa", "Av. Celiano Monge"]
+    ]
+  },
+  {
+    linea_id: "L14",
+    nombre: "Línea 14: Urb. San Alfonso – Mercado Mayorista",
+    operador: "Coop. Andina Exprés",
+    color: "#6366f1",
+    horario: "05:40–21:45",
+    frecuencia_min: 9,
+    sentido: "Este–Oeste",
+    calles: [
+      ["Av. Antonio José de Sucre", "Av. Unidad Nacional", "Av. Daniel León Borja"],
+      ["Av. Daniel León Borja", "Av. La Prensa", "Av. Celiano Monge"]
+    ]
+  }
+];
 
     // Leyenda buses
     let busFilterId = null, busLegendOpen = true;
