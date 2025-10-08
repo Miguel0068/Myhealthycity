@@ -4,7 +4,7 @@
 const sections = document.querySelectorAll(".menu li");
 const mainContent = document.getElementById("main-content");
 
-// === Animación de transición ===
+// === Animación de transición (con callback post-render) ===
 function transitionContent(html, afterRender) {
   mainContent.classList.remove("fade-in");
   mainContent.classList.add("fade-out");
@@ -25,8 +25,8 @@ const auroraTips = [
   "🌤️ Incluso los satélites descansan. Desconéctate para reconectarte."
 ];
 
-// === Respuestas locales de Aurora para el chat ===
-function auroraLocalResponse(message) {
+// === Respuestas locales de Aurora (mock) ===
+function auroraLocalResponse() {
   const responses = [
     "🌤️ Aurora: ¡Qué gusto hablar contigo! Recuerda, cada acción sostenible cuenta 💚",
     "💬 Aurora: Hoy es un buen día para cuidar tu entorno 🌎",
@@ -59,13 +59,6 @@ const HC = {
     { t: "Bienestar", d: "Pausas de 5 minutos cada hora + hidratación." }
   ]
 };
-
-function fillMiniList(id, items){
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.innerHTML = "";
-  items.forEach(x => el.insertAdjacentHTML("beforeend", `<li><b>${x.t}:</b> ${x.d}</li>`));
-}
 
 // —— Estilos del acordeón (inyectados una sola vez) ——
 function ensureAccordionStyles(){
@@ -108,7 +101,7 @@ function buildAccordion({id, icon, title, items}){
   `;
 }
 
-// —— Activación de acordeones (toggle altura y aria) ——
+// —— Activación de acordeones ——
 function attachAccordions(root=document){
   root.querySelectorAll(".ac-acc .acc-head").forEach(head=>{
     head.addEventListener("click", ()=>{
@@ -116,81 +109,89 @@ function attachAccordions(root=document){
       const body = acc.querySelector(".acc-body");
       const open = acc.classList.toggle("open");
       head.setAttribute("aria-expanded", open ? "true" : "false");
-      // Ajuste de altura para transición suave
-      if(open){
-        body.style.maxHeight = body.scrollHeight + "px";
-      }else{
-        body.style.maxHeight = "0px";
-      }
+      body.style.maxHeight = open ? (body.scrollHeight + "px") : "0px";
     });
   });
 }
 
+// === MÓDULOS IFRAME (Contaminación / Incidencias) ===
+const MODULES = {
+  contaminacion: "modules/contaminacion/index.html",
+  incidencias:   "modules/incidencias/index.html", // 👈 agregado
+};
 
-// === HOME (nuevo layout compacto + mapa con acordeones) ===
-async function loadHome() {
-
-  ensureAccordionStyles();
-
- transitionContent(`
-  <section class="welcome fade-in">
-    <h1 class="brand-title">
-      <span class="brand-accent">ANDES CITY</span> — inteligencia urbana local
-    </h1>
-    <p class="brand-subtitle">Predicciones, avisos y mapa activo de tu ciudad en una sola vista.</p>
-
-    <div class="data-card">
-      <h3>🧭 Panorama de hoy</h3>
-      <div class="cards-grid" id="ac-grid">
-        ${buildAccordion({ id:"acc-pred",   icon:"🔮", title:"Predicciones", items: HC.predicciones })}
-        ${buildAccordion({ id:"acc-avisos", icon:"📣", title:"Avisos",       items: HC.avisos })}
-        ${buildAccordion({ id:"acc-tur",    icon:"🗺️", title:"Turismo",      items: HC.turismo })}
-        ${buildAccordion({ id:"acc-aur",    icon:"💡", title:"Aurora",       items: HC.aurora })}
+// Cargar un módulo aislado en un iframe dentro de una data-card
+function loadModuleIframe(src, title = "Módulo Andes City") {
+  const html = `
+    <section class="welcome fade-in" style="padding:0">
+      <div class="data-card" style="padding:0; overflow:hidden">
+        <iframe class="module-frame" src="${src}" title="${title}" loading="eager"></iframe>
       </div>
-    </div>
-
-    <div class="city-stats">
-      <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
-      <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
-      <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
-    </div>
-
-    <div class="data-card">
-      <h3>🗺️ Mapa urbano</h3>
-      <p>Tu ubicación aproximada y zonas urbanas activas.</p>
-      <div id="map-preview"></div>
-    </div>
-  </section>
-`, () => {
-  // 1) activar acordeones cuando el DOM ya está pintado
-  attachAccordions(mainContent);
-
-  // 2) inicializar mapa (con guard para no duplicar)
-  const mapEl = document.getElementById('map-preview');
-  if (mapEl && !mapEl._leaflet_id) {
-    const map = L.map(mapEl).setView([-1.664, -78.654], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    L.marker([-1.664, -78.654]).addTo(map).bindPopup("📍 Riobamba, Ecuador").openPopup();
-  }
-});
-
-  // activar acordeones
-  attachAccordions(mainContent);
-
-  // Mapa
-  setTimeout(() => {
-    const map = L.map('map-preview').setView([-1.664, -78.654], 13); // Riobamba, Ecuador
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    L.marker([-1.664, -78.654]).addTo(map).bindPopup("📍 Riobamba, Ecuador").openPopup();
-  }, 300);
+    </section>`;
+  transitionContent(html, () => setTimeout(syncThemeToIframes, 50));
 }
 
+// Enviar el tema actual (dark/light) a todos los iframes de módulos
+function syncThemeToIframes() {
+  const frames = document.querySelectorAll(".module-frame");
+  const theme = document.body.classList.contains("dark-mode") ? "dark" : "light";
+  frames.forEach(f => {
+    try { f.contentWindow.postMessage({ type: "set-theme", theme }, "*"); } catch {}
+  });
+}
 
+// Observa cambios de clase (cuando el botón de tema viva en el HTML)
+new MutationObserver(syncThemeToIframes).observe(document.body, { attributes:true, attributeFilter:['class'] });
+
+// === HOME (layout compacto + mapa + acordeones) ===
+async function loadHome() {
+  ensureAccordionStyles();
+
+  transitionContent(`
+    <section class="welcome fade-in">
+      <h1 class="brand-title">
+        <span class="brand-accent">ANDES CITY</span> — inteligencia urbana local
+      </h1>
+      <p class="brand-subtitle">Predicciones, avisos y mapa activo de tu ciudad en una sola vista.</p>
+
+      <div class="data-card">
+        <h3>🧭 Panorama de hoy</h3>
+        <div class="cards-grid" id="ac-grid">
+          ${buildAccordion({ id:"acc-pred",   icon:"🔮", title:"Predicciones", items: HC.predicciones })}
+          ${buildAccordion({ id:"acc-avisos", icon:"📣", title:"Avisos",       items: HC.avisos })}
+          ${buildAccordion({ id:"acc-tur",    icon:"🗺️", title:"Turismo",      items: HC.turismo })}
+          ${buildAccordion({ id:"acc-aur",    icon:"💡", title:"Aurora",       items: HC.aurora })}
+        </div>
+      </div>
+
+      <div class="city-stats">
+        <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
+        <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
+        <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
+      </div>
+
+      <div class="data-card">
+        <h3>🗺️ Mapa urbano</h3>
+        <p>Tu ubicación aproximada y zonas urbanas activas.</p>
+        <div id="map-preview"></div>
+      </div>
+    </section>
+  `, () => {
+    // 1) activar acordeones cuando el DOM ya está pintado
+    attachAccordions(mainContent);
+
+    // 2) inicializar mapa con guard (para que no se duplique)
+    const mapEl = document.getElementById('map-preview');
+    if (mapEl && !mapEl._leaflet_id) {
+      const map = L.map(mapEl).setView([-1.664, -78.654], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      L.marker([-1.664, -78.654]).addTo(map).bindPopup("📍 Riobamba, Ecuador").openPopup();
+    }
+  });
+}
 
 // === Cargar Home al inicio ===
 document.addEventListener("DOMContentLoaded", loadHome);
@@ -212,12 +213,10 @@ sections.forEach(item => {
           <p>Explora rutas ecológicas, puntos de carga y tráfico en tiempo real en <b>Riobamba, Ecuador</b>.</p>
           <div id="map-container" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
         </div>
-      `);
-
-      setTimeout(() => {
+      `, () => {
         const map = L.map('map-container', { zoomControl: true }).setView([-1.664, -78.654], 13);
 
-        // === Capas base ===
+        // Capas base
         const voyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           attribution: '&copy; OpenStreetMap & CARTO',
           subdomains: 'abcd',
@@ -234,33 +233,17 @@ sections.forEach(item => {
           maxZoom: 17
         });
 
-        // === Control de capas ===
-        const baseMaps = { "🗺️ Voyager": voyager, "🛰️ Satélite": satellite, "⛰️ Topográfico": topo };
-        L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
+        L.control.layers({ "🗺️ Voyager": voyager, "🛰️ Satélite": satellite, "⛰️ Topográfico": topo }, null, { position: 'topright', collapsed: false }).addTo(map);
 
-        // === Icono de bicicleta ===
-        const bikeIcon = L.icon({
-          iconUrl: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
-          iconSize: [28, 28]
-        });
-
-        // === Puntos simulados de movilidad ===
-        const points = [
+        const bikeIcon = L.icon({ iconUrl: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png", iconSize: [28, 28] });
+        [
           { lat: -1.662, lng: -78.655, name: "CicloRuta Central" },
           { lat: -1.666, lng: -78.648, name: "Punto Ecológico Sur" },
           { lat: -1.658, lng: -78.662, name: "Estación Verde Norte" }
-        ];
+        ].forEach(p => L.marker([p.lat, p.lng], { icon: bikeIcon }).addTo(map).bindPopup(`🚴 <b>${p.name}</b>`));
 
-        points.forEach(p => {
-          L.marker([p.lat, p.lng], { icon: bikeIcon })
-            .addTo(map)
-            .bindPopup(`🚴 <b>${p.name}</b>`);
-        });
-
-        // === Círculo de alcance ===
         L.circle([-1.664, -78.654], { radius: 2000, color: "#00aaff", fillColor: "#00aaff", fillOpacity: 0.1 }).addTo(map);
 
-        // === Ubicación actual del usuario (si disponible) ===
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(pos => {
             const { latitude, longitude } = pos.coords;
@@ -268,124 +251,20 @@ sections.forEach(item => {
             map.setView([latitude, longitude], 14);
           });
         }
-      }, 600);
+      });
+      return;
     }
 
-    // === 🌫️ CONTAMINACIÓN ===
+    // === 🌫️ CONTAMINACIÓN / CLIMA & AIRE (módulo aislado) ===
     if (section === "contaminacion") {
-      transitionContent(`
-        <div class="data-card fade-in">
-          <h3>🌫️ Contaminación Ambiental</h3>
-          <p>Visualiza zonas simuladas de calidad del aire en Riobamba, Ecuador.</p>
-          <div id="pollution-map" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
-        </div>
-      `);
-
-      setTimeout(() => {
-        const map = L.map("pollution-map").setView([-1.664, -78.654], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
-        }).addTo(map);
-
-        const levels = [
-          { color: "#00e400", label: "Bueno" },
-          { color: "#ffff00", label: "Moderado" },
-          { color: "#ff7e00", label: "Dañino (sensibles)" },
-          { color: "#ff0000", label: "Dañino" },
-          { color: "#8f3f97", label: "Muy dañino" },
-          { color: "#7e0023", label: "Peligroso" }
-        ];
-
-        const simulatedZones = [
-          { lat: -1.659, lng: -78.654, level: 2, name: "Centro Histórico" },
-          { lat: -1.662, lng: -78.67, level: 3, name: "Sur de Riobamba" },
-          { lat: -1.648, lng: -78.64, level: 1, name: "Parque Ecológico" },
-          { lat: -1.67, lng: -78.63, level: 4, name: "Zona Industrial" }
-        ];
-
-        simulatedZones.forEach(z => {
-          const lvl = levels[z.level];
-          L.circle([z.lat, z.lng], {
-            radius: 1500, color: "#222", fillColor: lvl.color, fillOpacity: 0.6, weight: 1
-          })
-          .addTo(map)
-          .bindPopup(`<b>${z.name}</b><br>Índice: <b>${lvl.label}</b>`);
-        });
-
-        const legend = L.control({ position: "bottomright" });
-        legend.onAdd = function () {
-          const div = L.DomUtil.create("div", "info legend");
-          div.style.background = "#fff";
-          div.style.padding = "10px";
-          div.style.borderRadius = "8px";
-          div.innerHTML = "<b>🌀 Niveles AQI</b><br>";
-          levels.forEach(l => {
-            div.innerHTML += `<div style="margin-top:3px;">
-              <span style="background:${l.color};width:14px;height:10px;display:inline-block;margin-right:5px;"></span>${l.label}
-            </div>`;
-          });
-          return div;
-        };
-        legend.addTo(map);
-      }, 800);
+      loadModuleIframe(MODULES.contaminacion, "Clima & Calidad del Aire");
+      return;
     }
 
-    // === ⚠️ INCIDENCIAS URBANAS ===
+    // === ⚠️ INCIDENCIAS URBANAS (módulo aislado) ===
     if (section === "incidencias") {
-      transitionContent(`
-        <div class="data-card fade-in">
-          <h3>⚠️ Incidencias Urbanas</h3>
-          <p>Reporta y analiza incidencias en Riobamba, Ecuador.</p>
-          <div id="incident-map" style="height:80vh; width:100%; border-radius:12px; overflow:hidden; margin-top:10px;"></div>
-        </div>
-      `);
-
-      setTimeout(() => {
-        const map = L.map('incident-map', { zoomControl: true }).setView([-1.6635, -78.6547], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors, estilo HOT | servido por OSM France',
-          maxZoom: 19
-        }).addTo(map);
-
-        const tipos = {
-          basura:      { color: "#4CAF50", icon: "🗑️" },
-          accidente:   { color: "#F44336", icon: "🚗" },
-          cierre:      { color: "#FF9800", icon: "🚧" },
-          inseguridad: { color: "#3F51B5", icon: "🚨" }
-        };
-
-        const reportes = [
-          { lat: -1.662, lng: -78.654, tipo: "basura", lugar: "Centro Histórico" },
-          { lat: -1.669, lng: -78.663, tipo: "accidente", lugar: "Av. Celso Andrade" },
-          { lat: -1.655, lng: -78.647, tipo: "cierre", lugar: "Calle Tarqui" },
-          { lat: -1.672, lng: -78.64,  tipo: "inseguridad", lugar: "Zona Norte" }
-        ];
-
-        reportes.forEach(r => {
-          const t = tipos[r.tipo];
-          const marker = L.circleMarker([r.lat, r.lng], {
-            radius: 12, color: "#111", fillColor: t.color, fillOpacity: 0.8, weight: 1.5
-          }).addTo(map);
-          marker.bindPopup(`<b>${t.icon} ${r.lugar}</b><br>Tipo: ${r.tipo}<br>📅 Reporte ciudadano`);
-        });
-
-        const legend = L.control({ position: "bottomright" });
-        legend.onAdd = function () {
-          const div = L.DomUtil.create("div", "info legend");
-          div.style.background = "#fff";
-          div.style.padding = "10px";
-          div.style.borderRadius = "8px";
-          div.innerHTML = "<b>📊 Tipos de incidencias</b><br>";
-          Object.entries(tipos).forEach(([k, v]) => {
-            div.innerHTML += `<div style="margin-top:4px;">
-              <span style="background:${v.color};width:14px;height:10px;display:inline-block;margin-right:5px;"></span>${v.icon} ${k.charAt(0).toUpperCase()+k.slice(1)}
-            </div>`;
-          });
-          return div;
-        };
-        legend.addTo(map);
-      }, 500);
+      loadModuleIframe(MODULES.incidencias, "Incidencias Urbanas");
+      return;
     }
 
     // === 💬 AURORA ===
@@ -405,9 +284,7 @@ sections.forEach(item => {
             <button id="send-btn">Enviar</button>
           </div>
         </div>
-      `);
-
-      setTimeout(() => {
+      `, () => {
         const sendBtn = document.getElementById("send-btn");
         const userInput = document.getElementById("user-input");
         const chatBox = document.getElementById("chat");
@@ -429,17 +306,13 @@ sections.forEach(item => {
 
         sendBtn.addEventListener("click", sendMessage);
         userInput.addEventListener("keypress", e => e.key === "Enter" && sendMessage());
-      }, 300);
+      });
+      return;
     }
   });
 });
 
-// Carga inicial de HOME
-// (importante: esto asegura que el layout compacto siempre aparezca)
-document.addEventListener("DOMContentLoaded", loadHome);
-
-
-// ===== ANDES CITY — Canvas Logo (picos definidos + texto auto-contrast) =====
+// ===== ANDES CITY — Canvas Logo (picos OFF + subrayado animado + contraste) =====
 (function initAndesCanvasLogo() {
   // borra restos de <img> si quedaron
   document.querySelectorAll('.logo-icon').forEach(n => n.remove());
@@ -450,14 +323,12 @@ document.addEventListener("DOMContentLoaded", loadHome);
   const ctx = el.getContext('2d');
   const DPR = window.devicePixelRatio || 1;
 
-  // util: convierte "rgb(a)" o hex a luminancia para decidir contraste
   function parseColorToRgb(c) {
     if (!c) return {r: 0, g: 0, b: 0};
     if (c.startsWith('rgb')) {
       const [r,g,b] = c.match(/\d+/g).map(Number);
       return {r, g, b};
     }
-    // #rrggbb
     if (c[0] === '#') {
       const hex = c.length === 4
         ? c.replace(/#(.)(.)(.)/, '#$1$1$2$2$3$3')
@@ -465,11 +336,9 @@ document.addEventListener("DOMContentLoaded", loadHome);
       const int = parseInt(hex.slice(1), 16);
       return { r: (int>>16)&255, g: (int>>8)&255, b: int&255 };
     }
-    // fallback
     return {r: 0, g: 0, b: 0};
   }
   function relLuma({r,g,b}) {
-    // luminancia relativa sRGB
     const cv = [r,g,b].map(v=>{
       v/=255;
       return (v<=0.03928)? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
@@ -479,7 +348,7 @@ document.addEventListener("DOMContentLoaded", loadHome);
   function sidebarIsDark() {
     const sb = document.querySelector('.sidebar');
     const bg = getComputedStyle(sb||document.body).backgroundColor;
-    return relLuma(parseColorToRgb(bg)) < 0.35; // umbral
+    return relLuma(parseColorToRgb(bg)) < 0.35;
   }
 
   function resize() {
@@ -490,7 +359,6 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
 
-  // animación del “shimmer”
   let t = 0;
   const speed = 0.018;
 
@@ -498,32 +366,24 @@ document.addEventListener("DOMContentLoaded", loadHome);
     const w = el.width / DPR;
     const h = el.height / DPR;
 
-    // colores según contraste real del sidebar
     const darkBg = sidebarIsDark();
-    const ink      = darkBg ? '#ECECEC' : '#171717'; // texto
-    const strokes  = darkBg ? '#EFEFEF' : '#1E1E1E'; // montañas
-    const baseLine = darkBg ? '#EFEFEF' : '#6BA0B5'; // extremo del gradiente
+    const ink      = darkBg ? '#ECECEC' : '#171717';
+    const baseLine = darkBg ? '#EFEFEF' : '#6BA0B5';
     const glowA    = '#7ED0FF';
     const glowB    = '#9AF5E3';
 
     ctx.clearRect(0, 0, w, h);
-    ctx.save();
-    
-    const DRAW_MOUNTAINS = false; // o simplemente borraste el bloque de montañas
 
-
-
-    // ===== Texto marca (elegante) =====
+    // Texto marca
     ctx.save();
     ctx.fillStyle = ink;
-    ctx.shadowBlur = 0; // asegura sin brillo en texto
     ctx.font = '700 20px "Inter Tight", "Outfit", system-ui, sans-serif';
     ctx.textBaseline = 'top';
 
     const title = 'ANDES CITY';
     const startX = w * 0.10;
     let x = startX, yText = h * 0.60;
-    const track = 1.8; // interletra
+    const track = 1.8;
 
     for (const ch of title) {
       ctx.fillText(ch, x, yText);
@@ -531,12 +391,11 @@ document.addEventListener("DOMContentLoaded", loadHome);
     }
     ctx.restore();
 
-    // ===== Subrayado degradado + shimmer animado =====
+    // Subrayado degradado + shimmer
     const ulY = yText + 24;
     const ulL = startX;
     const ulR = Math.min(w * 0.92, x);
 
-    // línea base
     const grad = ctx.createLinearGradient(ulL, 0, ulR, 0);
     grad.addColorStop(0.00, glowB);
     grad.addColorStop(0.50, glowA);
@@ -548,19 +407,17 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ctx.lineTo(ulR, ulY);
     ctx.stroke();
 
-    // shimmer
     const band = Math.max(24, (ulR-ulL)*0.12);
     const cx = ulL + ((Math.sin(t) + 1) / 2) * (ulR - ulL - band) + band/2;
 
     const grad2 = ctx.createRadialGradient(cx, ulY, 0, cx, ulY, band/2);
-    grad2.addColorStop(0.0, darkBg ? 'rgba(126,208,255,0.75)' : 'rgba(126,208,255,0.9)');
+    grad2.addColorStop(0.0, darkBg ? 'rgba(126,208,255,0.55)' : 'rgba(126,208,255,0.8)');
     grad2.addColorStop(1.0, 'rgba(126,208,255,0)');
     ctx.fillStyle = grad2;
     ctx.fillRect(cx - band/2, ulY - 6, band, 12);
 
-    // punto glow
     ctx.save();
-    ctx.shadowColor = darkBg ? 'rgba(126,208,255,0.55)' : 'rgba(126,208,255,0.75)';
+    ctx.shadowColor = darkBg ? 'rgba(126,208,255,0.45)' : 'rgba(126,208,255,0.65)';
     ctx.shadowBlur = 16;
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
@@ -571,14 +428,11 @@ document.addEventListener("DOMContentLoaded", loadHome);
 
   function loop() { t += speed; draw(); requestAnimationFrame(loop); }
 
-  // redibuja al cambiar clase (tema) y al redimensionar
   const obs = new MutationObserver(() => draw());
   obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', () => { resize(); draw(); });
 
-  // arranque
   function start() {
-    // tamaño “visual” del canvas (puedes ampliar)
     const s = el.style;
     if (!s.width)  s.width  = '200px';
     if (!s.height) s.height = '90px';
@@ -590,5 +444,3 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ? document.addEventListener('DOMContentLoaded', start)
     : start();
 })();
-
-
