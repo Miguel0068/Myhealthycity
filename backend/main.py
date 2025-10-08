@@ -1,3 +1,4 @@
+# main.py — Backend raíz Aurora (Flask)
 from flask import Flask, jsonify, request, Response, stream_with_context
 from flask_cors import CORS
 import os
@@ -9,10 +10,13 @@ import time
 # Configuración base
 # =========================
 app = Flask(__name__)
-CORS(app)  # Puedes restringir: CORS(app, resources={r"/api/*": {"origins": "https://tu-dominio"}})
+# Si quieres restringir, cambia origins:
+# CORS(app, resources={r"/api/*": {"origins": "https://tu-dominio"}})
+CORS(app)
 
-# API Key desde entorno
+# API Key y modelo desde entorno
 openai.api_key = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # Prompt del sistema (tono femenino, predicciones y avisos urbanos)
 SYSTEM_PROMPT = (
@@ -72,10 +76,8 @@ def api_chat():
         return json_error("Mensaje vacío.", 400, "empty_message")
 
     try:
-        # Usamos el mismo patrón de tu backend anterior (ChatCompletion)
-        # Puedes cambiar el modelo si usas otro en Render.
         completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model=OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_message}
@@ -104,9 +106,8 @@ def api_chat_stream():
 
     def sse():
         try:
-            # Nota: con ChatCompletion el streaming va con stream=True
             stream = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model=OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_message}
@@ -116,21 +117,21 @@ def api_chat_stream():
                 stream=True,
             )
             for chunk in stream:
-                if "choices" in chunk and len(chunk["choices"]) and "delta" in chunk["choices"][0]:
-                    piece = chunk["choices"][0]["delta"].get("content", "")
+                if "choices" in chunk and chunk["choices"]:
+                    delta = chunk["choices"][0].get("delta", {})
+                    piece = delta.get("content", "")
                     if piece:
                         yield f"data: {json.dumps({'content': piece})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-    # Cabeceras SSE
     headers = {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         "Connection": "keep-alive",
         "X-Accel-Buffering": "no",
-        "Access-Control-Allow-Origin": "*",  # ajusta si restringes CORS
+        "Access-Control-Allow-Origin": "*",
     }
     return Response(stream_with_context(sse()), headers=headers)
 
@@ -154,5 +155,5 @@ def server_error(e):
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    # debug=False para que el server dev no envíe dos respuestas en SSE
+    # debug=False evita duplicados en SSE con el reloader
     app.run(host="0.0.0.0", port=port, debug=False)
