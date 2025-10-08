@@ -265,6 +265,7 @@ function navigate(section) {
   if (section === "home")          return loadHome();
   if (section === "contaminacion") return loadModuleIframe(MODULES.contaminacion, "Clima & Calidad del Aire");
   if (section === "incidencias")   return loadModuleIframe(MODULES.incidencias, "Incidencias Urbanas");
+  if (section === "movilidad")     return loadModuleIframe(MODULES.movilidad, "Movilidad Urbana");
 
   transitionContent(`<div class="data-card fade-in"><h3>${section}</h3><p class="muted">Contenido en construcción.</p></div>`);
 }
