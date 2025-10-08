@@ -1,53 +1,55 @@
-/* Aurora — estilos de smoke test */
+/* Aurora Demo - estética base */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(180deg, #ffffff 0%, #f4f4f4 50%, #000000 100%);
-  color: #000; margin: 0;
-  display: flex; justify-content: center; align-items: center;
-  min-height: 100vh;
+  background: linear-gradient(180deg,#ffffff 0%,#f4f4f4 50%,#000000 100%);
+  color:#000; margin:0;
+  display:flex; justify-content:center; align-items:center;
+  min-height:100vh;
 }
 .container{
-  width: 92%; max-width: 720px;
-  background: rgba(255,255,255,.92);
-  border-radius: 20px; padding: 18px;
-  box-shadow: 0 12px 30px rgba(0,0,0,.15);
+  width:92%; max-width:720px;
+  background:rgba(255,255,255,.9);
+  border-radius:24px; padding:20px;
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
 }
-header{ text-align:center; margin-bottom:12px }
-header h1{ margin:0 }
-header p{ margin:6px 0 0; color:#444 }
+header{text-align:center; margin-bottom:14px}
+header h1{margin:0; font-size:2em}
+header p{margin:6px 0 0; color:#555}
 
-#aurora-avatar{ display:flex; flex-direction:column; align-items:center; margin:12px 0 }
+#aurora-avatar{display:flex;flex-direction:column;align-items:center;margin:12px 0}
 .aurora-circle{
-  position:relative; width:140px; height:140px; border-radius:50%; overflow:hidden;
-  background: radial-gradient(circle at 30% 30%, #aeefff, #0077ff);
-  box-shadow: 0 0 25px rgba(0,0,0,.3); transition: .3s;
+  position:relative;width:140px;height:140px;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 30% 30%,#aeefff,#0077ff);
+  box-shadow:0 0 25px rgba(0,0,0,.3);transition:.3s;
 }
-.aurora-circle.active{ transform: scale(1.05); box-shadow: 0 0 40px rgba(0,120,255,.6) }
-.aurora-light{ position:absolute; width:200%; height:200%; top:-50%; left:-50%;
-  background: radial-gradient(circle, rgba(0,255,255,.5), transparent 60%);
-  animation: swirl 12s linear infinite; opacity:.7; filter: blur(18px);
+.aurora-circle.active{transform:scale(1.05);box-shadow:0 0 40px rgba(0,120,255,.6)}
+.aurora-light{position:absolute;width:200%;height:200%;top:-50%;left:-50%;
+  background:radial-gradient(circle,rgba(0,255,255,.5),transparent 60%);
+  animation:swirl 12s linear infinite;opacity:.7;filter:blur(18px);
 }
-.aurora-light.a2{ background: radial-gradient(circle, rgba(0,150,255,.5), transparent 60%); animation-direction: reverse; }
-.aurora-light.a3{ background: radial-gradient(circle, rgba(0,255,180,.5), transparent 60%); animation-duration: 16s; }
-@keyframes swirl { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-.avatar-name{ margin-top:8px; font-weight:700 }
+.aurora-light.a2{background:radial-gradient(circle,rgba(0,150,255,.5),transparent 60%);animation-direction:reverse}
+.aurora-light.a3{background:radial-gradient(circle,rgba(0,255,180,.5),transparent 60%);animation-duration:16s}
+@keyframes swirl{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.avatar-name{margin-top:8px;font-weight:700}
 
 .chat-box{
-  height: 320px; overflow-y:auto; background:#fff; border-radius:12px;
-  padding:12px; border:1px solid #ddd;
+  height:300px;overflow-y:auto;background:#fff;border-radius:14px;
+  padding:12px;border:1px solid #ddd;
 }
-.user, .bot{
-  display:block; margin:10px; padding:10px 12px; border-radius:16px;
-  max-width:75%; line-height:1.4; animation: fadeIn .25s ease-in;
+.user,.bot{
+  display:block;margin:10px;padding:10px 12px;border-radius:16px;
+  max-width:75%;line-height:1.4;animation:fadeIn .25s ease-in;
 }
-.user{ background:#dcefff; margin-left:auto; text-align:right }
-.bot{ background:#f4f4f4; margin-right:auto; text-align:left }
-@keyframes fadeIn { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+.user{background:#dcefff;margin-left:auto;text-align:right}
+.bot{background:#f4f4f4;margin-right:auto;text-align:left}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-#input-area{ display:flex; gap:8px; margin-top:10px }
-#userInput{ flex:1; height:42px; border:1px solid #ccc; border-radius:10px; padding:0 12px }
-#sendBtn{ height:42px; border:none; border-radius:10px; padding:0 14px; cursor:pointer;
-  font-weight:800; background:#0077ff; color:#fff }
-#sendBtn:hover{ background:#005ec2 }
+#input-area{display:flex;gap:8px;margin-top:10px}
+#userInput{flex:1;height:42px;border:1px solid #ccc;border-radius:10px;padding:0 12px}
+#sendBtn{height:42px;border:none;border-radius:10px;padding:0 14px;cursor:pointer;
+  font-weight:800;background:#0077ff;color:#fff}
+#sendBtn:hover{background:#005ec2}
+
+footer{text-align:center;margin-top:10px;color:#666;font-size:0.85em}

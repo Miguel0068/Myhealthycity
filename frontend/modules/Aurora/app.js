@@ -1,4 +1,8 @@
 (function(){
+  // 👉 Si ya tienes backend, reemplaza este string:
+  // window.AURORA_API_BASE = "https://TU-BACKEND.onrender.com";
+  // Por ahora el demo funciona sin conexión, solo estética.
+
   const chat = document.getElementById("chat");
   const input = document.getElementById("userInput");
   const btn = document.getElementById("sendBtn");
@@ -11,22 +15,28 @@
     chat.scrollTop = chat.scrollHeight;
   }
 
-  // Smoke test: NO llama backend; simula respuesta
   async function send(){
     const text = (input.value || "").trim();
     if(!text) return;
     push("user", text);
     input.value = "";
 
-    // animación avatar
+    // animación del avatar
     const avatar = document.querySelector(".aurora-circle");
     avatar?.classList.add("active");
-    setTimeout(()=>avatar?.classList.remove("active"), 1000);
+    setTimeout(()=>avatar?.classList.remove("active"), 1200);
 
-    // “respuesta” fake para probar UI
+    // Respuesta simulada (no usa backend)
     setTimeout(()=>{
-      push("bot", "Recibido. Si ves esto, la UI de Aurora se está renderizando bien en Vercel.");
-    }, 500);
+      const replies = [
+        "Qué gusto verte 🌞",
+        "Cuidar el aire también es cuidarte a ti 💨",
+        "Puedes preguntarme sobre clima o movilidad urbana 🚲",
+        "Estoy lista para ayudarte 🌿"
+      ];
+      const reply = replies[Math.floor(Math.random()*replies.length)];
+      push("bot", reply);
+    }, 800);
   }
 
   btn.addEventListener("click", send);

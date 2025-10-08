@@ -3,19 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Aurora · Smoke Test</title>
+  <title>Aurora Demo · Asistente Urbana</title>
 
-  <!-- Si tu backend está en Render, puedes setearlo luego con meta:
-  <meta name="aurora-api-base" content="https://TU-BACKEND.onrender.com">
-  -->
+  <!-- Si ya tienes backend en Render, descomenta y pon la URL -->
+  <!-- <meta name="aurora-api-base" content="https://TU-BACKEND.onrender.com"> -->
 
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>✨ Aurora</h1>
-      <p>UI de prueba (debe verse el avatar, el chat y el botón)</p>
+      <h1>✨ Aurora Demo</h1>
+      <p>Versión visual de prueba — sólo estética</p>
     </header>
 
     <div id="aurora-avatar">
@@ -28,13 +27,17 @@
     </div>
 
     <div id="chat" class="chat-box">
-      <p class="bot"><b>Aurora:</b> Hola 👋, esta es una UI de prueba. Si me ves, Vercel ya está sirviendo el módulo.</p>
+      <p class="bot"><b>Aurora:</b> Hola 🌿, soy Aurora. Estoy aquí para ayudarte a cuidar la ciudad.</p>
     </div>
 
     <div id="input-area">
-      <input id="userInput" type="text" placeholder="Escribe algo para probar la UI…" />
+      <input id="userInput" type="text" placeholder="Escribe algo..." />
       <button id="sendBtn" type="button">Enviar</button>
     </div>
+
+    <footer>
+      <small>💫 Andes City · Módulo Aurora Demo (solo estética)</small>
+    </footer>
   </div>
 
   <script src="./app.js"></script>
