@@ -66,6 +66,10 @@
   const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: '© OpenTopoMap', maxZoom: 17 });
   L.control.layers({ 'Calles': streets, 'Topográfico': topo }, {}, { position: 'topleft' }).addTo(map);
 
+  setTimeout(() => map.invalidateSize(), 250);
+window.addEventListener("resize", () => map.invalidateSize());
+
+
   // ——— Utilidades ———
   function getWeatherIcon(wmo) {
     if (wmo === 0) return '☀️';
