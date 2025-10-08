@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ANDES CITY — Incidencias Urbanas</title>
+
+  <!-- Fuente coherente con el sitio -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet"/>
+
+  <!-- Estilos del módulo -->
+  <link rel="stylesheet" href="./styles.css"/>
+
+  <!-- Leaflet (aislado al módulo) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Tema: toma el guardado si se abre directo -->
+  <script>
+    try {
+      const saved = localStorage.getItem("andes-theme");
+      if (saved) document.documentElement.setAttribute("data-theme", saved);
+    } catch {}
+    // Sincroniza tema desde la SPA
+    window.addEventListener("message", (e) => {
+      if (e?.data?.type === "set-theme") {
+        document.documentElement.setAttribute("data-theme", e.data.theme);
+        try { localStorage.setItem("andes-theme", e.data.theme); } catch {}
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <h1>⚠️ Incidencias Urbanas</h1>
+      <p>Reporta y analiza focos de basura, cierres, seguridad y accidentes.</p>
+    </header>
+
+    <!-- Barra de acciones -->
+    <div class="toolbar">
+      <button id="reportBtn">📍 Reportar Basura</button>
+      <button id="clearBtn">🗑️ Limpiar Todo</button>
+      <button id="viewDataBtn">📊 Ver Análisis</button>
+    </div>
+
+    <!-- Stats compactas -->
+    <div class="stats">
+      <span>Reportes: <b id="totalCount">0</b></span>
+      <span>Parroquias afectadas: <b id="sectorCount">0</b></span>
+    </div>
+
+    <!-- Lista de parroquias -->
+    <div class="sector-list" id="sectorList">
+      <div class="empty-state">No hay reportes aún</div>
+    </div>
+
+    <!-- Mapa -->
+    <div id="map" role="region" aria-label="Mapa de incidencias"></div>
+  </div>
+
+  <!-- Lógica del módulo -->
+  <script src="./app.js"></script>
+</body>
+</html>

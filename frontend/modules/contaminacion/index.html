@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>ANDES CITY — Clima & Calidad del Aire</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fuente (misma que el sitio) -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet y Chart.js (solo dentro del módulo) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Estilos del módulo (aislado) -->
+  <link rel="stylesheet" href="./styles.css" />
+
+  <!-- Sincronía de tema desde la app (postMessage del padre) -->
+  <script>
+    // preferencia si el módulo se abre solo
+    const saved = localStorage.getItem("andes-theme");
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+
+    // escucha el tema que envía la SPA
+    window.addEventListener("message", (e) => {
+      if (e.data && e.data.type === "set-theme") {
+        document.documentElement.setAttribute("data-theme", e.data.theme);
+        try { localStorage.setItem("andes-theme", e.data.theme); } catch {}
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <div id="loading-overlay">Cargando datos... 🛰️</div>
+
+    <!-- Panel lateral -->
+    <aside class="sidebar" role="complementary" aria-label="Panel lateral de control">
+      <div>
+        <h1>Clima & Calidad del Aire</h1>
+        <div class="meta">Módulo de datos públicos (Open-Meteo & OpenTopoData)</div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Seleccionar vista de datos">
+        <div class="tab active" id="tab-overview" role="tab" aria-selected="true">📊 Resumen</div>
+        <div class="tab" id="tab-clima" role="tab">🌤️ Clima</div>
+        <div class="tab" id="tab-aqi" role="tab">💨 Calidad Aire</div>
+        <div class="tab" id="tab-agri" role="tab">🌱 Agrícola</div>
+        <div class="tab" id="tab-soil" role="tab">🔄 Suelo</div>
+      </div>
+
+      <!-- Resumen -->
+      <section id="content-overview" class="section">
+        <div class="row">
+          <div>
+            <div class="small">Temperatura actual</div>
+            <div id="temp-now" class="big">-- °C</div>
+            <div id="temp-desc" class="small-muted">—</div>
+          </div>
+          <div class="center">
+            <div class="small">Clima Actual</div>
+            <div id="weather-icon" style="font-size:32px; margin-top:4px;">—</div>
+            <div id="precip-prob" class="small-muted">—</div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 12px;">
+          <div class="center">
+            <div class="small">💧 Humedad</div>
+            <div id="humidity-now" class="medium">--%</div>
+          </div>
+          <div class="center">
+            <div class="small">💨 Viento</div>
+            <div id="wind-now" class="medium">-- km/h</div>
+          </div>
+          <div class="center">
+            <div class="small">🌧️ Precipitación</div>
+            <div id="precip-mm" class="medium">-- mm</div>
+          </div>
+        </div>
+
+        <div id="alerts-container"></div>
+
+        <div style="margin-top:14px">
+          <div class="small"><b>Pronóstico 7 días</b></div>
+          <div id="forecast-temp" class="forecastList"></div>
+        </div>
+
+        <button id="btn-refresh-overview" class="btn" aria-label="Actualizar datos">🔄 Actualizar</button>
+      </section>
+
+      <!-- Clima -->
+      <section id="content-clima" class="section" style="display:none">
+        <div class="row">
+          <div>
+            <div class="small">Temperatura actual</div>
+            <div id="clima-temp-now" class="big">-- °C</div>
+            <div id="clima-temp-desc" class="small-muted">—</div>
+          </div>
+          <div class="center">
+            <div class="small">Sensación Térmica</div>
+            <div id="feels-like" class="medium">-- °C</div>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-top: 12px;">
+          <div class="center">
+            <div class="small">☀️ Índice UV</div>
+            <div id="uv-index" class="medium">--</div>
+            <div id="uv-desc" class="small-muted">--</div>
+          </div>
+          <div class="center">
+            <div class="small">⬇️ Presión</div>
+            <div id="pressure-now" class="medium">-- hPa</div>
+          </div>
+          <div class="center">
+            <div class="small">👁️ Visibilidad</div>
+            <div id="visibility-now" class="medium">-- km</div>
+          </div>
+          <div class="center">
+            <div class="small">☁️ Nubosidad</div>
+            <div id="cloudcover-now" class="medium">--%</div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="hourly-chart"></canvas>
+        </div>
+
+        <button id="btn-refresh-clima" class="btn" aria-label="Actualizar datos climáticos">🔄 Actualizar</button>
+      </section>
+
+      <!-- Calidad del Aire -->
+      <section id="content-aqi" class="section" style="display:none">
+        <div class="row">
+          <div>
+            <div class="small">AQI estimado (promedio área)</div>
+            <div id="aqi-now" class="big">—</div>
+            <div id="aqi-desc" class="small-muted">—</div>
+          </div>
+          <div class="center">
+            <div class="small">PM2.5</div>
+            <div id="pm-now" class="small-muted">— µg/m³</div>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-top: 12px;">
+          <div class="center"><div class="small">PM10</div><div id="pm10-now" class="medium">-- µg/m³</div></div>
+          <div class="center"><div class="small">O₃</div><div id="ozone-now" class="medium">-- µg/m³</div></div>
+          <div class="center"><div class="small">NO₂</div><div id="no2-now" class="medium">-- µg/m³</div></div>
+          <div class="center"><div class="small">SO₂</div><div id="so2-now" class="medium">-- µg/m³</div></div>
+        </div>
+
+        <div class="legend">
+          <div><b>Leyenda AQI (Calidad del Aire)</b></div>
+          <div><span class="swatch" style="background:rgba(0,150,0,0.7)"></span><span class="small">Buena (0–50)</span></div>
+          <div><span class="swatch" style="background:rgba(255,206,0,0.7)"></span><span class="small">Moderada (51–100)</span></div>
+          <div><span class="swatch" style="background:rgba(255,120,0,0.7)"></span><span class="small">Dañina (101–150)</span></div>
+          <div><span class="swatch" style="background:rgba(200,30,30,0.7)"></span><span class="small">Mala (151–200)</span></div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="aqi-chart"></canvas>
+        </div>
+
+        <div class="small-muted" style="margin-top:12px;">Los datos de AQI son estimaciones de modelo. Para decisiones críticas, consulte estaciones locales.</div>
+        <button id="btn-refresh-aqi" class="btn" aria-label="Actualizar AQI">🔄 Actualizar</button>
+      </section>
+
+      <!-- Agrícola -->
+      <section id="content-agri" class="section" style="display:none">
+        <div class="row">
+          <div>
+            <div class="small">Temperatura del Suelo (0–7cm)</div>
+            <div id="soil-temp-now" class="big">-- °C</div>
+          </div>
+          <div class="center">
+            <div class="small">Humedad del Suelo</div>
+            <div id="soil-moisture-now" class="big">-- m³/m³</div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 12px;">
+          <div class="center"><div class="small">💧 Precip. 24h</div><div id="precip-accum" class="medium">-- mm</div></div>
+          <div class="center"><div class="small">🌡️ Temp. Mínima</div><div id="min-temp" class="medium">-- °C</div></div>
+          <div class="center"><div class="small">💨 Evapotranspiración</div><div id="evapotranspiration" class="medium">-- mm</div></div>
+          <div class="center"><div class="small">🌿 NDVI Estimado</div><div id="ndvi-est" class="medium">--</div></div>
+        </div>
+
+        <div id="agri-alerts-container"></div>
+
+        <div class="legend">
+          <div><b>Leyenda Temperatura Suelo</b></div>
+          <div><span class="swatch" style="background:linear-gradient(90deg,#1b4bff,#0fb3e6)"></span><span class="small">Frío</span></div>
+          <div><span class="swatch" style="background:linear-gradient(90deg,#8be16b,#ffd166)"></span><span class="small">Templado</span></div>
+          <div><span class="swatch" style="background:linear-gradient(90deg,#ff9a76,#ef4444)"></span><span class="small">Caliente</span></div>
+        </div>
+
+        <div class="small-muted" style="margin-top:12px;">Datos específicos para agricultura. Temperatura y humedad del suelo son críticas para la siembra.</div>
+        <button id="btn-refresh-agri" class="btn" aria-label="Actualizar datos agrícolas">🔄 Actualizar</button>
+      </section>
+
+      <!-- Suelo -->
+      <section id="content-soil" class="section" style="display:none">
+        <div class="row">
+          <div>
+            <div class="small">Humedad Disponible</div>
+            <div id="available-moisture" class="big">--%</div>
+          </div>
+          <div class="center">
+            <div class="small">Recomendación Riego</div>
+            <div id="irrigation-recommendation" class="medium">--</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <div class="small">Nivel de Humedad del Suelo:</div>
+          <div class="progress-bar"><div id="soil-moisture-bar" class="progress-fill" style="width: 50%; background: linear-gradient(90deg, #8B4513, #CD853F, #8FBC8F);"></div></div>
+          <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 4px;">
+            <span>Seco</span><span>Óptimo</span><span>Saturado</span>
+          </div>
+        </div>
+
+        <div class="grid-4" style="margin-top: 12px;">
+          <div class="center"><div class="small">Capacidad Campo</div><div id="field-capacity" class="medium">--%</div></div>
+          <div class="center"><div class="small">Punto Marchitez</div><div id="wilting-point" class="medium">--%</div></div>
+          <div class="center"><div class="small">Déficit Hídrico</div><div id="water-deficit" class="medium">-- mm</div></div>
+          <div class="center"><div class="small">Tipo Suelo</div><div id="soil-type" class="medium">--</div></div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="small"><b>Indicadores de Salud del Suelo</b></div>
+
+        <div style="margin-top: 8px;">
+          <div class="small">Temperatura Óptima: <span id="soil-temp-status" class="small-muted">--</span></div>
+          <div class="progress-bar"><div id="soil-temp-bar" class="progress-fill" style="width: 50%; background: #3b82f6;"></div></div>
+        </div>
+
+        <div style="margin-top: 8px;">
+          <div class="small">Humedad Óptima: <span id="soil-moisture-status" class="small-muted">--</span></div>
+          <div class="progress-bar"><div id="soil-moisture-progress-bar" class="progress-fill" style="width: 50%; background: #10b981;"></div></div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="small"><b>Recomendaciones Detalladas</b></div>
+        <div id="detailed-recommendations" class="small-muted" style="margin-top: 8px;">Cargando recomendaciones...</div>
+
+        <button id="btn-refresh-soil" class="btn" aria-label="Actualizar análisis de suelo">🔄 Actualizar</button>
+      </section>
+
+      <!-- POIs y opciones -->
+      <section class="section">
+        <div class="small"><b>📍 Puntos de Interés</b></div>
+        <div class="poi-container">
+          <button class="poi-btn" data-lat="-1.663" data-lon="-78.654">Riobamba</button>
+          <button class="poi-btn" data-lat="-1.469" data-lon="-78.817">Volcán Chimborazo</button>
+          <button class="poi-btn" data-lat="-2.196" data-lon="-78.847">Alausi</button>
+          <button class="poi-btn" data-lat="-1.933" data-lon="-78.733">Guamote</button>
+          <button class="poi-btn" data-lat="-2.217" data-lon="-78.433">Lagunas de Ozogoche</button>
+          <button class="poi-btn" data-lat="-1.983" data-lon="-78.967">Pallatanga</button>
+          <button class="poi-btn" data-lat="-2.167" data-lon="-78.983">Cumandá</button>
+          <button class="poi-btn" data-lat="-2.267" data-lon="-78.917">Chunchi</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="small"><b>🗺️ Opciones de Mapa Base</b></div>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <button id="map-streets" class="btn" style="flex:1; background:var(--card-bg);color:var(--text);border:1px solid var(--border)">Calles</button>
+          <button id="map-topo" class="btn" style="flex:1; background:var(--card-bg);color:var(--text);border:1px solid var(--border)">Topográfico</button>
+        </div>
+        <button id="btn-geolocate" class="btn btn-outline" style="margin-top:8px; width:100%;">📍 Usar mi ubicación</button>
+      </section>
+
+      <div class="footer-note" style="margin-top:auto; padding-top:10px;">
+        Datos de <b>Open-Meteo</b> y <b>OpenTopoData</b>. No se requiere API key. Cobertura expandida para Chimborazo y zonas cercanas.
+      </div>
+    </aside>
+
+    <!-- Mapa -->
+    <main class="map-container" role="main">
+      <div id="map" aria-label="Mapa de Chimborazo"></div>
+      <div class="map-legend" id="mapLegend">
+        <div><b>Capa Activa</b></div>
+        <div id="legendContent" style="margin-top:6px" class="small-muted">Cargando...</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Lógica del módulo -->
+  <script src="./app.js"></script>
+</body>
+</html>
