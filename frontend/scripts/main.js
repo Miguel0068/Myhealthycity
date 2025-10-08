@@ -509,45 +509,72 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ctx.clearRect(0, 0, w, h);
     ctx.save();
 
-   const yBase = h * 0.46;
+   const yBase = h * 0.50;
 
-// Ajustes finos
-const ridgeW = 3.2;   // grosor cresta principal
-const subW   = 3.0;   // grosor trazos secundarios
-ctx.lineJoin = 'round';
-ctx.lineCap  = 'round';
-ctx.miterLimit = 2;
+  // Ajustes para trazos limpios
+  const ridgeW = 2.8;
+  const subW   = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap  = 'round';
+  ctx.miterLimit = 2;
 
-// === Trazo 1: cresta principal (dos picos, derecha con "cola" suave)
-ctx.strokeStyle = strokes;
-ctx.lineWidth   = ridgeW;
-ctx.beginPath();
-ctx.moveTo(w*0.06, yBase + h*0.12);                                  // arranque bajo izquierda
-ctx.bezierCurveTo(w*0.18, yBase - h*0.06, w*0.26, yBase - h*0.20,    // subida pico 1
-                  w*0.34, yBase - h*0.09);
-ctx.bezierCurveTo(w*0.39, yBase - h*0.03, w*0.43, yBase + h*0.02,    // valle
-                  w*0.48, yBase - h*0.01);
-ctx.bezierCurveTo(w*0.57, yBase - h*0.22, w*0.66, yBase - h*0.17,    // subida pico 2 (más alto)
-                  w*0.73, yBase - h*0.08);
-ctx.bezierCurveTo(w*0.83, yBase + h*0.02, w*0.91, yBase,             // bajada + cola
-                  w*0.95, yBase - h*0.02);
-ctx.stroke();
+  // === Trazo 1: Perfil principal de montañas (tres picos definidos)
+  ctx.strokeStyle = strokes;
+  ctx.lineWidth   = ridgeW;
+  ctx.beginPath();
+  
+  // Inicio suave desde la izquierda
+  ctx.moveTo(w*0.08, yBase + h*0.08);
+  
+  // Primer pico (izquierda, moderado)
+  ctx.bezierCurveTo(
+    w*0.16, yBase - h*0.08,
+    w*0.22, yBase - h*0.15,
+    w*0.28, yBase - h*0.12
+  );
+  
+  // Valle suave
+  ctx.bezierCurveTo(
+    w*0.32, yBase - h*0.08,
+    w*0.38, yBase - h*0.04,
+    w*0.44, yBase - h*0.06
+  );
+  
+  // Segundo pico (centro, más alto)
+  ctx.bezierCurveTo(
+    w*0.52, yBase - h*0.20,
+    w*0.58, yBase - h*0.18,
+    w*0.64, yBase - h*0.14
+  );
+  
+  // Valle intermedio
+  ctx.bezierCurveTo(
+    w*0.68, yBase - h*0.10,
+    w*0.72, yBase - h*0.08,
+    w*0.76, yBase - h*0.10
+  );
+  
+  // Tercer pico (derecha, elegante)
+  ctx.bezierCurveTo(
+    w*0.82, yBase - h*0.14,
+    w*0.88, yBase - h*0.08,
+    w*0.94, yBase - h*0.02
+  );
+  
+  ctx.stroke();
 
-// === Trazo 2: arista interior del valle (diagonal elegante)
-ctx.lineWidth = subW;
-ctx.beginPath();
-// arranca bajo el primer pico y desciende hacia el valle central
-ctx.moveTo(w*0.37, yBase - h*0.07);
-ctx.quadraticCurveTo(w*0.41, yBase - h*0.03, w*0.46, yBase + h*0.03);
-ctx.stroke();
+  // === Trazo 2: Ladera interior izquierda
+  ctx.lineWidth = subW;
+  ctx.beginPath();
+  ctx.moveTo(w*0.30, yBase - h*0.10);
+  ctx.lineTo(w*0.38, yBase - h*0.02);
+  ctx.stroke();
 
-// === Trazo 3: "aleta" corta en lomo derecho (carácter del logo)
-ctx.beginPath();
-ctx.moveTo(w*0.67, yBase - h*0.11);
-ctx.quadraticCurveTo(w*0.69, yBase - h*0.09, w*0.71, yBase - h*0.08);
-ctx.stroke();
-
-    ctx.restore();
+  // === Trazo 3: Ladera interior derecha
+  ctx.beginPath();
+  ctx.moveTo(w*0.66, yBase - h*0.12);
+  ctx.lineTo(w*0.72, yBase - h*0.06);
+  ctx.stroke();
 
     // ===== Texto marca (elegante) =====
     ctx.save();
