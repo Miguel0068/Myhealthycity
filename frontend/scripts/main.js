@@ -16,6 +16,31 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 const mainContent = $("#main-content");
 
+// Monta el canvas de logo en la barra lateral (top-left)
+function mountSidebarLogoCanvas() {
+  // Contenedor de logo en sidebar
+  const slot = document.querySelector('.sidebar .logo');
+  if (!slot) return;
+
+  // Limpia restos (img/iconos antiguos)
+  slot.querySelectorAll('.logo-icon, img').forEach(n => n.remove());
+
+  // Crea canvas si no existe
+  let canvas = document.getElementById('logo-canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.id = 'logo-canvas';
+    canvas.width = 200;
+    canvas.height = 90;
+    // estilos responsivos suaves
+    canvas.style.width = '200px';
+    canvas.style.height = '90px';
+    canvas.style.display = 'block';
+    canvas.style.margin = '0 auto';
+    slot.prepend(canvas);
+  }
+}
+
 function transitionContent(html, afterRender) {
   if (!mainContent) return;
   mainContent.classList.remove("fade-in");
@@ -254,6 +279,11 @@ document.addEventListener("DOMContentLoaded", () => {
       navigate(li.getAttribute("data-section"));
     }, true);
   }
+
+  // 👉 Inserta el canvas en la barra lateral (logo arriba-izquierda)
+  mountSidebarLogoCanvas();
+
+  // Vista inicial
   navigate("home");
 });
 
@@ -271,8 +301,146 @@ document.addEventListener("DOMContentLoaded", () => {
     @keyframes fi{from{opacity:0; transform:translateY(4px)}to{opacity:1; transform:none}}
     @keyframes fo{from{opacity:1}to{opacity:0}}
     .data-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(16,24,40,.06)}
+    .data-card h3{color:var(--ink)}           /* asegura color correcto en modo oscuro */
+    .brand-subtitle{color:var(--muted)}       /* subtítulo toma la variable de tema */
     .welcome{max-width:1200px;margin:0 auto;padding:8px 12px}
     .menu li.active{font-weight:600}
   `;
   document.head.appendChild(tag);
+})();
+
+/* =========================================================
+   6) LOGO CANVAS — (picos OFF + subrayado animado + contraste)
+   Pegado tal cual, sin alterar tu lógica ni el router.
+   ========================================================= */
+(function initAndesCanvasLogo() {
+  // borra restos de <img> si quedaron
+  document.querySelectorAll('.logo-icon').forEach(n => n.remove());
+
+  const el = document.getElementById('logo-canvas');
+  if (!el) return;
+
+  const ctx = el.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+
+  function parseColorToRgb(c) {
+    if (!c) return {r: 0, g: 0, b: 0};
+    if (c.startsWith('rgb')) {
+      const [r,g,b] = c.match(/\d+/g).map(Number);
+      return {r, g, b};
+    }
+    if (c[0] === '#') {
+      const hex = c.length === 4
+        ? c.replace(/#(.)(.)(.)/, '#$1$1$2$2$3$3')
+        : c;
+      const int = parseInt(hex.slice(1), 16);
+      return { r: (int>>16)&255, g: (int>>8)&255, b: int&255 };
+    }
+    return {r: 0, g: 0, b: 0};
+  }
+  function relLuma({r,g,b}) {
+    const cv = [r,g,b].map(v=>{
+      v/=255;
+      return (v<=0.03928)? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+    });
+    return 0.2126*cv[0]+0.7152*cv[1]+0.0722*cv[2];
+  }
+  function sidebarIsDark() {
+    const sb = document.querySelector('.sidebar');
+    const bg = getComputedStyle(sb||document.body).backgroundColor;
+    return relLuma(parseColorToRgb(bg)) < 0.35;
+  }
+
+  function resize() {
+    const cssW = el.clientWidth || 200;
+    const cssH = el.clientHeight || 90;
+    el.width = Math.round(cssW * DPR);
+    el.height = Math.round(cssH * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  let t = 0;
+  const speed = 0.018;
+
+  function draw() {
+    const w = el.width / DPR;
+    const h = el.height / DPR;
+
+    const darkBg = sidebarIsDark();
+    const ink      = darkBg ? '#ECECEC' : '#171717';
+    const baseLine = darkBg ? '#EFEFEF' : '#6BA0B5';
+    const glowA    = '#7ED0FF';
+    const glowB    = '#9AF5E3';
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Texto marca
+    ctx.save();
+    ctx.fillStyle = ink;
+    ctx.font = '700 20px "Inter Tight", "Outfit", system-ui, sans-serif';
+    ctx.textBaseline = 'top';
+
+    const title = 'ANDES CITY';
+    const startX = w * 0.10;
+    let x = startX, yText = h * 0.60;
+    const track = 1.8;
+
+    for (const ch of title) {
+      ctx.fillText(ch, x, yText);
+      x += ctx.measureText(ch).width + track + (ch === ' ' ? 6 : 0);
+    }
+    ctx.restore();
+
+    // Subrayado degradado + shimmer
+    const ulY = yText + 24;
+    const ulL = startX;
+    const ulR = Math.min(w * 0.92, x);
+
+    const grad = ctx.createLinearGradient(ulL, 0, ulR, 0);
+    grad.addColorStop(0.00, glowB);
+    grad.addColorStop(0.50, glowA);
+    grad.addColorStop(1.00, baseLine);
+    ctx.lineWidth = 1.8;
+    ctx.strokeStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(ulL, ulY);
+    ctx.lineTo(ulR, ulY);
+    ctx.stroke();
+
+    const band = Math.max(24, (ulR-ulL)*0.12);
+    const cx = ulL + ((Math.sin(t) + 1) / 2) * (ulR - ulL - band) + band/2;
+
+    const grad2 = ctx.createRadialGradient(cx, ulY, 0, cx, ulY, band/2);
+    grad2.addColorStop(0.0, darkBg ? 'rgba(126,208,255,0.55)' : 'rgba(126,208,255,0.8)');
+    grad2.addColorStop(1.0, 'rgba(126,208,255,0)');
+    ctx.fillStyle = grad2;
+    ctx.fillRect(cx - band/2, ulY - 6, band, 12);
+
+    ctx.save();
+    ctx.shadowColor = darkBg ? 'rgba(126,208,255,0.45)' : 'rgba(126,208,255,0.65)';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(cx, ulY, 2.4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function loop() { t += speed; draw(); requestAnimationFrame(loop); }
+
+  const obs = new MutationObserver(() => draw());
+  obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  window.addEventListener('resize', () => { resize(); draw(); });
+
+  function start() {
+    const s = el.style;
+    if (!s.width)  s.width  = '200px';
+    if (!s.height) s.height = '90px';
+    resize();
+    draw();
+    loop();
+  }
+  (document.readyState === 'loading')
+    ? document.addEventListener('DOMContentLoaded', start)
+    : start();
 })();
