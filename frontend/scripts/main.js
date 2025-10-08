@@ -509,31 +509,43 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ctx.clearRect(0, 0, w, h);
     ctx.save();
 
-    // ===== 2 picos con relieve más “nevado” =====
-    const yBase = h * 0.44;
-    ctx.lineWidth = 2.8;
-    ctx.lineJoin = 'round';
-    ctx.lineCap  = 'round';
-    ctx.strokeStyle = strokes;
+   const yBase = h * 0.46;
 
-    // Silueta principal (pico izquierdo suave + pico derecho más alto)
-    ctx.beginPath();
-    ctx.moveTo(w*0.05, yBase + h*0.03);
-    // subida al pico 1
-    ctx.bezierCurveTo(w*0.16, yBase - h*0.12, w*0.24, yBase - h*0.18, w*0.33, yBase - h*0.08);
-    // bajada a valle
-    ctx.bezierCurveTo(w*0.38, yBase - h*0.02, w*0.43, yBase + h*0.01, w*0.48, yBase - h*0.02);
-    // subida pico 2 (más agudo)
-    ctx.bezierCurveTo(w*0.58, yBase - h*0.24, w*0.67, yBase - h*0.20, w*0.74, yBase - h*0.10);
-    // salida derecha
-    ctx.bezierCurveTo(w*0.86, yBase - h*0.02, w*0.92, yBase - h*0.04, w*0.96, yBase - h*0.08);
-    ctx.stroke();
+// Ajustes finos
+const ridgeW = 3.2;   // grosor cresta principal
+const subW   = 3.0;   // grosor trazos secundarios
+ctx.lineJoin = 'round';
+ctx.lineCap  = 'round';
+ctx.miterLimit = 2;
 
-    // Cresta “nevado” del pico derecho
-    ctx.beginPath();
-    ctx.moveTo(w*0.60, yBase - h*0.19);
-    ctx.quadraticCurveTo(w*0.645, yBase - h*0.155, w*0.69, yBase - h*0.125);
-    ctx.stroke();
+// === Trazo 1: cresta principal (dos picos, derecha con "cola" suave)
+ctx.strokeStyle = strokes;
+ctx.lineWidth   = ridgeW;
+ctx.beginPath();
+ctx.moveTo(w*0.06, yBase + h*0.12);                                  // arranque bajo izquierda
+ctx.bezierCurveTo(w*0.18, yBase - h*0.06, w*0.26, yBase - h*0.20,    // subida pico 1
+                  w*0.34, yBase - h*0.09);
+ctx.bezierCurveTo(w*0.39, yBase - h*0.03, w*0.43, yBase + h*0.02,    // valle
+                  w*0.48, yBase - h*0.01);
+ctx.bezierCurveTo(w*0.57, yBase - h*0.22, w*0.66, yBase - h*0.17,    // subida pico 2 (más alto)
+                  w*0.73, yBase - h*0.08);
+ctx.bezierCurveTo(w*0.83, yBase + h*0.02, w*0.91, yBase,             // bajada + cola
+                  w*0.95, yBase - h*0.02);
+ctx.stroke();
+
+// === Trazo 2: arista interior del valle (diagonal elegante)
+ctx.lineWidth = subW;
+ctx.beginPath();
+// arranca bajo el primer pico y desciende hacia el valle central
+ctx.moveTo(w*0.37, yBase - h*0.07);
+ctx.quadraticCurveTo(w*0.41, yBase - h*0.03, w*0.46, yBase + h*0.03);
+ctx.stroke();
+
+// === Trazo 3: "aleta" corta en lomo derecho (carácter del logo)
+ctx.beginPath();
+ctx.moveTo(w*0.67, yBase - h*0.11);
+ctx.quadraticCurveTo(w*0.69, yBase - h*0.09, w*0.71, yBase - h*0.08);
+ctx.stroke();
 
     ctx.restore();
 
