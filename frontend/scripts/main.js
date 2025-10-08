@@ -508,77 +508,10 @@ document.addEventListener("DOMContentLoaded", loadHome);
 
     ctx.clearRect(0, 0, w, h);
     ctx.save();
+    
+    const DRAW_MOUNTAINS = false; // o simplemente borraste el bloque de montañas
 
-   const yBase = h * 0.52;
 
-  // Grosores para silueta tipo Chimborazo/Andes
-  const ridgeW = 2.6;
-  const subW   = 2.3;
-  ctx.lineJoin = 'round';
-  ctx.lineCap  = 'round';
-  ctx.miterLimit = 2;
-
-  // === PERFIL PRINCIPAL: Inspirado en volcanes andinos (Chimborazo, Cotopaxi)
-  ctx.strokeStyle = strokes;
-  ctx.lineWidth   = ridgeW;
-  ctx.beginPath();
-  
-  // Inicio: base izquierda
-  ctx.moveTo(w*0.05, yBase + h*0.05);
-  
-  // Primera elevación: ladera volcánica suave
-  ctx.bezierCurveTo(
-    w*0.12, yBase - h*0.02,
-    w*0.18, yBase - h*0.08,
-    w*0.24, yBase - h*0.10
-  );
-  
-  // Cima redondeada estilo Chimborazo (cúpula glaciar)
-  ctx.bezierCurveTo(
-    w*0.32, yBase - h*0.18,
-    w*0.42, yBase - h*0.22,
-    w*0.52, yBase - h*0.20
-  );
-  
-  // Descenso del glaciar
-  ctx.bezierCurveTo(
-    w*0.58, yBase - h*0.18,
-    w*0.63, yBase - h*0.12,
-    w*0.68, yBase - h*0.08
-  );
-  
-  // Valle interandino
-  ctx.bezierCurveTo(
-    w*0.72, yBase - h*0.05,
-    w*0.76, yBase - h*0.04,
-    w*0.80, yBase - h*0.06
-  );
-  
-  // Segundo pico volcánico (menor altura)
-  ctx.bezierCurveTo(
-    w*0.85, yBase - h*0.12,
-    w*0.90, yBase - h*0.10,
-    w*0.95, yBase - h*0.04
-  );
-  
-  ctx.stroke();
-
-  // === LADERA INTERIOR: Define estructura del volcán principal
-  ctx.lineWidth = subW;
-  ctx.beginPath();
-  ctx.moveTo(w*0.28, yBase - h*0.12);
-  ctx.bezierCurveTo(
-    w*0.34, yBase - h*0.08,
-    w*0.42, yBase - h*0.04,
-    w*0.50, yBase - h*0.02
-  );
-  ctx.stroke();
-
-  // === DETALLE: Cresta secundaria del segundo volcán
-  ctx.beginPath();
-  ctx.moveTo(w*0.82, yBase - h*0.08);
-  ctx.lineTo(w*0.86, yBase - h*0.04);
-  ctx.stroke();
 
     // ===== Texto marca (elegante) =====
     ctx.save();
@@ -657,3 +590,5 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ? document.addEventListener('DOMContentLoaded', start)
     : start();
 })();
+
+

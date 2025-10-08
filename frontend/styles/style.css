@@ -282,3 +282,18 @@ body.dark-mode .brand-subtitle { color: var(--muted); }
 
 /* Oculta el texto debajo del canvas del logo en la barra lateral */
 .logo .brand { display: none; }
+
+/* Contenedor del SVG del logo */
+#andes-mountains svg {
+  width: 200px;       /* ajusta tamaño a gusto */
+  height: 56px;
+  display: block;
+  margin-bottom: 4px; /* separación con el canvas del texto */
+}
+
+/* El SVG usa currentColor → hereda el color del contenedor */
+.sidebar .logo { color: #efefef; }           /* sidebar oscuro */
+body:not(.dark-mode) .sidebar .logo { color: #1a1a1a; }  /* sidebar claro */
+
+/* Por si algún reset global afecta el trazo */
+#andes-mountains path { vector-effect: non-scaling-stroke; }
