@@ -265,3 +265,20 @@ body.dark-mode .brand-subtitle { color: var(--muted); }
 
 /* Une mejor con tu layout actual */
 .welcome { margin-top: 3.5%; }
+
+/* Canvas del logo (responsive + nítido) */
+.logo #logo-canvas {
+  width: 180px;   /* ajusta si quieres más grande */
+  height: 80px;
+  display: block;
+}
+
+/* Solo-lectura visual (accesible para lectores de pantalla) */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,1px,1px); white-space: nowrap; border: 0;
+}
+
+/* Oculta el texto debajo del canvas del logo en la barra lateral */
+.logo .brand { display: none; }
