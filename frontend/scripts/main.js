@@ -439,34 +439,87 @@ sections.forEach(item => {
 document.addEventListener("DOMContentLoaded", loadHome);
 
 
-// === LOGO DINÁMICO SEGÚN TEMA (Light / Dark) ===
-document.addEventListener("DOMContentLoaded", () => {
-  const themeBtn = document.getElementById("theme-toggle");
-  const logoImg  = document.querySelector(".logo-icon");
+// ====== THEME + LOGO MANAGER (robusto, sin choques) ======
+(function () {
+  if (window.__ANDES_THEME_INIT__) return; // evita doble init
+  window.__ANDES_THEME_INIT__ = true;
 
-  function syncLogo(){
+  function qs(sel) { return document.querySelector(sel); }
+
+  function applyTheme(mode) {
+    document.body.classList.toggle("dark-mode", mode === "dark");
+    const btn = qs("#theme-toggle");
+    if (btn) btn.textContent = (mode === "dark") ? "☀️" : "🌙";
+    syncLogo(); // siempre sincroniza el logo
+    try { localStorage.setItem("theme", mode); } catch {}
+  }
+
+  function currentMode() {
+    return document.body.classList.contains("dark-mode") ? "dark" : "light";
+  }
+
+  function detectInitialMode() {
+    // 1) preferencia guardada
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") return saved;
+    } catch {}
+    // 2) preferencia del sistema
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+    // 3) por defecto claro (cámbialo a "dark" si prefieres)
+    return "light";
+  }
+
+  function syncLogo() {
+    const img = qs(".logo-icon");
+    if (!img) return;
     const isDark = document.body.classList.contains("dark-mode");
-    if (logoImg) {
-      const light = logoImg.dataset.light;
-      const dark  = logoImg.dataset.dark;
-      if (light && dark) logoImg.src = isDark ? dark : light;
+    const light = img.getAttribute("data-light");
+    const dark  = img.getAttribute("data-dark");
+
+    // Si hay rutas válidas, úsalas; si no, no cambies src
+    if (light && dark) {
+      const nextSrc = isDark ? dark : light;
+      if (img.src !== location.origin + "/" + nextSrc && !img.src.endsWith(nextSrc)) {
+        img.style.opacity = "0";
+        // Fallback: si falla la carga, oculto la imagen y muestro el título
+        img.onerror = () => {
+          img.style.display = "none";
+          const brand = qs(".logo .brand");
+          if (brand) brand.style.display = "block";
+        };
+        img.onload = () => { img.style.opacity = "1"; };
+        img.src = nextSrc;
+      }
     }
-    if (themeBtn) themeBtn.textContent = isDark ? "☀️" : "🌙";
   }
 
-  // Detecta tema del sistema al cargar (opcional)
-  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    document.body.classList.add("dark-mode");
+  function initThemeAndLogo() {
+    // Asegurar que el título esté visible si no hay imagen
+    const brand = qs(".logo .brand");
+    if (brand) brand.style.display = "block";
+
+    // Aplica el modo inicial
+    applyTheme(detectInitialMode());
+
+    // Listener del botón con capture para evitar choques con otros scripts
+    const btn = qs("#theme-toggle");
+    if (btn) {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation(); // neutraliza listeners previos conflictivos
+        applyTheme(currentMode() === "dark" ? "light" : "dark");
+      }, { capture: true });
+    }
+
+    // Por si el inline script cambió algo antes:
+    setTimeout(syncLogo, 0);
   }
 
-  // Botón de cambio de tema
-  if (themeBtn) {
-    themeBtn.addEventListener("click", () => {
-      document.body.classList.toggle("dark-mode");
-      syncLogo();
-    });
+  // Ejecuta cuando el DOM esté listo
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initThemeAndLogo);
+  } else {
+    initThemeAndLogo();
   }
-
-  // Ejecuta al inicio
-  syncLogo();
-});
+})();
