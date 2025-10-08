@@ -267,7 +267,6 @@ function navigate(section) {
   if (section === "contaminacion") return loadModuleIframe(MODULES.contaminacion, "Clima & Calidad del Aire");
   if (section === "incidencias")   return loadModuleIframe(MODULES.incidencias, "Incidencias Urbanas");
   if (section === "movilidad")     return loadModuleIframe(MODULES.movilidad, "Movilidad Urbana");
-  if (section === "aurora") return loadModuleIframe(MODULES.aurora, "Aurora · Asistente Urbana");
 
   transitionContent(`<div class="data-card fade-in"><h3>${section}</h3><p class="muted">Contenido en construcción.</p></div>`);
 }
@@ -450,178 +449,104 @@ document.addEventListener("DOMContentLoaded", () => {
     : start();
 })();
 
-/* ===========================
-   AURORA INLINE (sin iframe)
-   =========================== */
-function auroraResolveApiBase(){
-  // 1) Variable global (si la pones en <script> del index)
-  if (typeof window.AURORA_API_BASE === "string" && window.AURORA_API_BASE.trim()){
-    return window.AURORA_API_BASE.replace(/\/+$/, "");
-  }
-  // 2) Meta tag (si la pones en <head>)
-  const meta = document.querySelector('meta[name="aurora-api-base"]');
-  if (meta && meta.content) return meta.content.replace(/\/+$/, "");
-  // 3) Sin base → mismo dominio (si tu backend está unido al front)
-  return "";
-}
+/* ==================================================
+   AURORA CHAT WIDGET (flotante, en todos los módulos)
+   ================================================== */
+(function initAuroraWidget(){
+  const API_BASE = window.AURORA_API_BASE || document.querySelector('meta[name="aurora-api-base"]')?.content || "";
 
-function auroraEnsureStyles(){
-  if (document.getElementById("aurora-inline-styles")) return;
   const css = `
-  .aur-wrap{max-width:720px;margin:0 auto}
-  .aur-card{background:rgba(255,255,255,.94);border:1px solid #e5e7eb;border-radius:20px;padding:16px;box-shadow:0 10px 28px rgba(16,24,40,.08)}
-  .aur-head{ text-align:center; margin-bottom:10px }
-  .aur-head h2{ margin:0; font-size:22px }
-  .aur-head p{ margin:6px 0 0; color:#475569 }
-  .aur-avatar{ display:flex; flex-direction:column; align-items:center; margin:12px 0 }
-  .aur-circle{ position:relative; width:140px; height:140px; border-radius:50%; overflow:hidden;
-               background: radial-gradient(circle at 30% 30%, #aeefff, #0077ff);
-               box-shadow:0 0 24px rgba(0,0,0,.22); transition:.28s }
-  .aur-circle.active{ transform:scale(1.05); box-shadow:0 0 38px rgba(0,120,255,.6) }
-  .aur-glow{ position:absolute; width:200%; height:200%; top:-50%; left:-50%;
-             background: radial-gradient(circle, rgba(0,255,255,.5), transparent 60%);
-             animation: aur-swirl 12s linear infinite; opacity:.7; filter: blur(18px) }
-  .aur-glow.g2{ background: radial-gradient(circle, rgba(0,150,255,.5), transparent 60%); animation-direction:reverse }
-  .aur-glow.g3{ background: radial-gradient(circle, rgba(0,255,180,.5), transparent 60%); animation-duration:16s }
-  @keyframes aur-swirl { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-  .aur-name{ margin-top:8px; font-weight:800 }
-  .aur-chat{ height:320px; overflow:auto; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:12px }
-  .aur-msg{ display:block; margin:10px; padding:10px 12px; border-radius:16px; max-width:75%; line-height:1.4; animation: aur-in .22s ease }
+  .aur-float-btn{
+    position:fixed; bottom:24px; right:24px; z-index:9999;
+    width:60px; height:60px; border-radius:50%;
+    background:linear-gradient(180deg,#7ed0ff,#0095e9);
+    box-shadow:0 4px 16px rgba(0,0,0,.25);
+    display:flex; justify-content:center; align-items:center;
+    cursor:pointer; transition:.25s;
+  }
+  .aur-float-btn:hover{ transform:scale(1.08); }
+  .aur-float-btn svg{ width:28px; height:28px; fill:#fff; }
+
+  .aur-panel{
+    position:fixed; bottom:100px; right:30px; z-index:9998;
+    width:320px; max-height:450px;
+    background:#fff; border-radius:16px;
+    box-shadow:0 8px 32px rgba(0,0,0,.25);
+    display:none; flex-direction:column; overflow:hidden;
+    font-family:'Segoe UI',sans-serif;
+  }
+  .aur-panel.active{ display:flex; animation:fadeIn .2s ease; }
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .aur-head{ background:linear-gradient(180deg,#7ed0ff,#9af5e3);
+             padding:10px; color:#0b1220; font-weight:800; text-align:center; }
+  .aur-chat{ flex:1; overflow:auto; padding:10px; background:#f9fafb }
+  .aur-msg{ margin:6px 0; padding:8px 10px; border-radius:12px; max-width:80%; line-height:1.3 }
   .aur-msg.user{ background:#dcefff; margin-left:auto; text-align:right }
-  .aur-msg.bot { background:#f4f4f4; margin-right:auto; text-align:left }
-  @keyframes aur-in { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
-  .aur-input{ display:flex; gap:8px; margin-top:10px }
-  .aur-input input{ flex:1; height:42px; border:1px solid #cbd5e1; border-radius:10px; padding:0 12px }
-  .aur-input button{ height:42px; border:none; border-radius:10px; padding:0 14px; cursor:pointer; font-weight:800;
-                     background:linear-gradient(180deg,#7ed0ff,#9af5e3); color:#0b1220 }
-  .aur-note{ text-align:center; color:#64748b; font-size:12px; margin-top:8px }
+  .aur-msg.bot{ background:#fff; border:1px solid #e5e7eb; }
+
+  .aur-input{ display:flex; gap:6px; padding:8px; border-top:1px solid #e5e7eb; background:#fff; }
+  .aur-input input{ flex:1; height:36px; border:1px solid #cbd5e1; border-radius:8px; padding:0 10px; font-size:14px; }
+  .aur-input button{ background:#0077ff; border:none; color:#fff; padding:0 14px; border-radius:8px; cursor:pointer; font-weight:600; }
+  .aur-input button:hover{ background:#005ec2; }
   `;
-  const tag = document.createElement("style");
-  tag.id = "aurora-inline-styles";
-  tag.textContent = css;
-  document.head.appendChild(tag);
-}
+  const style = document.createElement("style");
+  style.id = "aurora-widget-styles";
+  style.textContent = css;
+  document.head.appendChild(style);
 
-function loadAuroraInline(){
-  auroraEnsureStyles();
-  const API_BASE = auroraResolveApiBase();
+  // contenedor
+  const btn = document.createElement("div");
+  btn.className = "aur-float-btn";
+  btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-9.95 9.1 9.5 9.5 0 0 0 3.59 8L4 22l3.06-1.65A9.94 9.94 0 0 0 12 22a10 10 0 0 0 0-20zm0 18a8 8 0 0 1-4.39-1.28l-.31-.19L6 19l.45-1.25-.48-.37A7.5 7.5 0 0 1 12 4.5 7.5 7.5 0 0 1 12 20zm-1-8h2v2h-2v-2zm0-5h2v4h-2V7z"/></svg>`;
+  document.body.appendChild(btn);
 
-  transitionContent(`
-    <section class="welcome">
-      <div class="aur-wrap">
-        <div class="aur-card">
-          <div class="aur-head">
-            <h2>✨ Aurora</h2>
-            <p>Asistente urbana (demo inline). Estética garantizada, backend opcional.</p>
-          </div>
+  const panel = document.createElement("div");
+  panel.className = "aur-panel";
+  panel.innerHTML = `
+    <div class="aur-head">💬 Aurora</div>
+    <div class="aur-chat" id="aur-chatbox">
+      <div class="aur-msg bot"><b>Aurora:</b> ¡Hola! Soy Aurora 🌿 ¿en qué puedo ayudarte?</div>
+    </div>
+    <div class="aur-input">
+      <input id="aur-input" type="text" placeholder="Escribe un mensaje...">
+      <button id="aur-send">Enviar</button>
+    </div>
+  `;
+  document.body.appendChild(panel);
 
-          <div class="aur-avatar">
-            <div class="aur-circle">
-              <div class="aur-glow"></div>
-              <div class="aur-glow g2"></div>
-              <div class="aur-glow g3"></div>
-            </div>
-            <div class="aur-name">Aurora</div>
-          </div>
+  // eventos
+  btn.addEventListener("click", ()=> panel.classList.toggle("active"));
+  const chatbox = panel.querySelector("#aur-chatbox");
+  const input = panel.querySelector("#aur-input");
+  const sendBtn = panel.querySelector("#aur-send");
 
-          <div id="aur-chat" class="aur-chat">
-            <p class="aur-msg bot"><b>Aurora:</b> Hola 👋, si me ves ya quedó la parte visual. ¡Probemos!</p>
-          </div>
+  function push(role,text){
+    const msg = document.createElement("div");
+    msg.className = "aur-msg "+role;
+    msg.innerHTML = `<b>${role==="user"?"Tú":"Aurora"}:</b> ${text}`;
+    chatbox.appendChild(msg);
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
 
-          <div class="aur-input">
-            <input id="aur-inp" type="text" placeholder="Escribe algo…" />
-            <button id="aur-send" type="button">Enviar</button>
-          </div>
+  async function send(){
+    const text = input.value.trim();
+    if(!text) return;
+    push("user", text);
+    input.value = "";
 
-          <div class="aur-note">
-            ${API_BASE
-              ? `Conectada a <code>${API_BASE}</code>`
-              : `Sin backend configurado: responderé simulado. (Cuando tengas Render, define <code>window.AURORA_API_BASE</code> o <code>&lt;meta name="aurora-api-base"&gt;</code>)`}
-          </div>
-        </div>
-      </div>
-    </section>
-  `, () => {
-    const $ = (s,r=document)=>r.querySelector(s);
-    const chat = $("#aur-chat");
-    const inp  = $("#aur-inp");
-    const btn  = $("#aur-send");
-
-    function push(role, text){
-      const p = document.createElement("p");
-      p.className = "aur-msg " + (role === "user" ? "user" : "bot");
-      p.innerHTML = `<b>${role === "user" ? "Tú" : "Aurora"}:</b> ${text}`;
-      chat.appendChild(p);
-      chat.scrollTop = chat.scrollHeight;
+    try{
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ message: text })
+      });
+      const data = await res.json();
+      push("bot", data.reply || "No recibí respuesta.");
+    }catch(err){
+      push("bot", "⚠️ Error al conectar con el servidor.");
     }
-
-    function pulse(){
-      const c = document.querySelector(".aur-circle");
-      c?.classList.add("active");
-      setTimeout(()=>c?.classList.remove("active"), 1100);
-    }
-
-    async function fetchJSON(url, opts = {}, timeoutMs = 15000){
-      const ctrl = new AbortController();
-      const id = setTimeout(()=>ctrl.abort(), timeoutMs);
-      try{
-        const res = await fetch(url, { ...opts, signal: ctrl.signal });
-        const data = await res.json().catch(()=>({}));
-        if (!res.ok) throw new Error(data?.error?.message || data?.message || `HTTP ${res.status}`);
-        return data;
-      }finally{ clearTimeout(id); }
-    }
-
-    async function send(){
-      const text = (inp.value || "").trim();
-      if (!text) return;
-      push("user", text);
-      inp.value = "";
-      pulse();
-
-      // Si NO hay backend -> respuesta simulada
-      if (!API_BASE){
-        setTimeout(()=>{
-          const tips = [
-            "Listo. Cuando definas el backend, pegaré tu respuesta real.",
-            "Puedes preguntarme por aire, clima o movilidad.",
-            "Para conectar Render, define window.AURORA_API_BASE en tu index.",
-            "¿Quieres que te avise picos de tráfico? 😉"
-          ];
-          push("bot", tips[Math.floor(Math.random()*tips.length)]);
-        }, 600);
-        return;
-      }
-
-      // Con backend en Render:
-      try{
-        const data = await fetchJSON(`${API_BASE}/api/health`, { method:"GET" }, 5000).catch(()=>null);
-        if (!data) push("bot", "⚠️ No pude verificar el backend, intento de todas formas…");
-
-        const out = await fetchJSON(`${API_BASE}/api/chat`, {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ message: text })
-        }, 15000);
-
-        const reply = out.reply || "Hubo un problema al responder.";
-        push("bot", reply);
-
-        // voz suave (solo si está disponible)
-        try{
-          const u = new SpeechSynthesisUtterance(reply);
-          u.lang="es-ES"; u.pitch=1.15; u.rate=1;
-          const voices = speechSynthesis.getVoices();
-          const pref = voices.find(v=>/Google español|Helena|Luciana|Paulina/i.test(v.name));
-          if (pref) u.voice=pref;
-          speechSynthesis.speak(u);
-        }catch{}
-      }catch(err){
-        push("bot", "⚠️ No puedo conectar con el servidor: " + (err?.message || ""));
-      }
-    }
-
-    btn.addEventListener("click", send);
-    inp.addEventListener("keydown", e=>{ if(e.key==="Enter") send(); });
-  });
-}
+  }
+  sendBtn.addEventListener("click", send);
+  input.addEventListener("keydown", e=>{ if(e.key==="Enter") send(); });
+})();
