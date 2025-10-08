@@ -146,7 +146,8 @@ function injectLegacyUI() {
   if (legacyLoaded) return;
   legacyLoaded = true;
   const s = document.createElement("script");
-  s.src = "scripts/ui-legacy.js"; // <-- AQUÍ va tu archivo viejo (renombrado)
+  s.src = s.src = "frontend/scripts/ui-legacy.js"; // <-- AQUÍ va tu archivo viejo (renombrado)
+                                                       
   s.async = true;
   s.onload = () => {
     // Si tu archivo define una init explícita, la llamamos:
