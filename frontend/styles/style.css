@@ -231,3 +231,37 @@ body.dark-mode .mini-list li {
   background: linear-gradient(180deg, #0F2946 0%, #0B1E33 100%);
   border-color: #173a58; color: #eaf4ff;
 }
+
+/* ——— Título principal minimal ——— */
+.brand-title {
+  font-family: "Inter Tight", system-ui, -apple-system, Segoe UI, Roboto, "Outfit", sans-serif;
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 48px);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 0 0 6px;
+}
+
+.brand-title .brand-accent {
+  /* Azul suave con ligero gradiente, muy sutil */
+  background: linear-gradient(90deg, #7ed0ff 0%, #9af5e3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Subtítulo más fino y legible */
+.brand-subtitle {
+  font-family: "Outfit", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-weight: 500;
+  font-size: clamp(14px, 1.6vw, 18px);
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* Modo oscuro: mantiene contraste perfecto */
+body.dark-mode .brand-subtitle { color: var(--muted); }
+
+/* Une mejor con tu layout actual */
+.welcome { margin-top: 3.5%; }

@@ -66,32 +66,84 @@ function fillMiniList(id, items){
   items.forEach(x => el.insertAdjacentHTML("beforeend", `<li><b>${x.t}:</b> ${x.d}</li>`));
 }
 
-// === HOME (nuevo layout compacto + mapa) ===
+// —— Estilos del acordeón (inyectados una sola vez) ——
+function ensureAccordionStyles(){
+  if (document.getElementById("ac-accordion-styles")) return;
+  const css = `
+  .ac-acc{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .ac-acc .acc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer}
+  .ac-acc .acc-head:hover{background:var(--hover-bg)}
+  .acc-title{display:flex;align-items:center;gap:8px;font-weight:600}
+  .acc-badge{font-size:12px;padding:4px 8px;border-radius:999px;background:var(--hover-bg);border:1px solid var(--line)}
+  .acc-chev{transition:transform .2s ease;font-weight:700;opacity:.7}
+  .ac-acc.open .acc-chev{transform:rotate(90deg)}
+  .ac-acc .acc-body{overflow:hidden;max-height:0;transition:max-height .25s ease}
+  .ac-acc.open .acc-body{max-height:520px}
+  .ac-acc .mini-list{padding:12px}
+  `;
+  const tag = document.createElement("style");
+  tag.id = "ac-accordion-styles";
+  tag.textContent = css;
+  document.head.appendChild(tag);
+}
+
+// —— Constructor de tarjeta/acordeón ——
+function buildAccordion({id, icon, title, items}){
+  return `
+    <article class="ac-acc" data-acc-id="${id}">
+      <div class="acc-head" role="button" aria-expanded="false" aria-controls="${id}">
+        <div class="acc-title"><span>${icon}</span><span>${title}</span></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="acc-badge">${items.length}</span>
+          <span class="acc-chev">›</span>
+        </div>
+      </div>
+      <div class="acc-body" id="${id}">
+        <ul class="mini-list">
+          ${items.map(x=>`<li><b>${x.t}:</b> ${x.d}</li>`).join("")}
+        </ul>
+      </div>
+    </article>
+  `;
+}
+
+// —— Activación de acordeones (toggle altura y aria) ——
+function attachAccordions(root=document){
+  root.querySelectorAll(".ac-acc .acc-head").forEach(head=>{
+    head.addEventListener("click", ()=>{
+      const acc = head.closest(".ac-acc");
+      const body = acc.querySelector(".acc-body");
+      const open = acc.classList.toggle("open");
+      head.setAttribute("aria-expanded", open ? "true" : "false");
+      // Ajuste de altura para transición suave
+      if(open){
+        body.style.maxHeight = body.scrollHeight + "px";
+      }else{
+        body.style.maxHeight = "0px";
+      }
+    });
+  });
+}
+
+
+// === HOME (nuevo layout compacto + mapa con acordeones) ===
 async function loadHome() {
+  ensureAccordionStyles();
+
   transitionContent(`
     <section class="welcome fade-in">
-      <h1><span>ANDES CITY</span> — inteligencia urbana local</h1>
-      <p class="intro-text">Predicciones, avisos y mapa activo de tu ciudad en una sola vista.</p>
+      <h1 class="brand-title">
+        <span class="brand-accent">ANDES CITY</span> — inteligencia urbana local
+      </h1>
+      <p class="brand-subtitle">Predicciones, avisos y mapa activo de tu ciudad en una sola vista.</p>
 
       <div class="data-card">
         <h3>🧭 Panorama de hoy</h3>
-        <div class="cards-grid">
-          <article class="data-card">
-            <h4>🔮 Predicciones</h4>
-            <ul id="home-predicciones" class="mini-list"></ul>
-          </article>
-          <article class="data-card">
-            <h4>📣 Avisos</h4>
-            <ul id="home-avisos" class="mini-list"></ul>
-          </article>
-          <article class="data-card">
-            <h4>🗺️ Turismo</h4>
-            <ul id="home-turismo" class="mini-list"></ul>
-          </article>
-          <article class="data-card">
-            <h4>💡 Aurora</h4>
-            <ul id="home-aurora" class="mini-list"></ul>
-          </article>
+        <div class="cards-grid" id="ac-grid">
+          ${buildAccordion({ id:"acc-pred",   icon:"🔮", title:"Predicciones", items: HC.predicciones })}
+          ${buildAccordion({ id:"acc-avisos", icon:"📣", title:"Avisos",       items: HC.avisos })}
+          ${buildAccordion({ id:"acc-tur",    icon:"🗺️", title:"Turismo",      items: HC.turismo })}
+          ${buildAccordion({ id:"acc-aur",    icon:"💡", title:"Aurora",       items: HC.aurora })}
         </div>
       </div>
 
@@ -109,22 +161,20 @@ async function loadHome() {
     </section>
   `);
 
-  // Relleno de tarjetas
-  fillMiniList("home-predicciones", HC.predicciones);
-  fillMiniList("home-avisos", HC.avisos);
-  fillMiniList("home-turismo", HC.turismo);
-  fillMiniList("home-aurora", HC.aurora);
+  // activar acordeones
+  attachAccordions(mainContent);
 
   // Mapa
   setTimeout(() => {
     const map = L.map('map-preview').setView([-1.664, -78.654], 13); // Riobamba, Ecuador
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; OpenStreetMap contributors'
+      maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
     L.marker([-1.664, -78.654]).addTo(map).bindPopup("📍 Riobamba, Ecuador").openPopup();
   }, 300);
 }
+
+
 
 // === Cargar Home al inicio ===
 document.addEventListener("DOMContentLoaded", loadHome);
