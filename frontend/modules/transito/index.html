@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Riobamba · Movilidad</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin />
+  <script>
+  (function(){
+    var s=document.createElement("script");
+    s.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.onerror=function(){
+      var s2=document.createElement("script");
+      s2.src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  })();
+  </script>
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">Riobamba · Movilidad</div>
+      <div class="hint">Capas exclusivas: se muestra solo una</div>
+    </div>
+
+    <div class="shell">
+      <div id="map" aria-label="Mapa de Riobamba"></div>
+
+      <div id="trafficLegendFloating">
+        <span class="chip"><span class="dot t1"></span>Bajo</span>
+        <span class="chip"><span class="dot t2"></span>Medio</span>
+        <span class="chip"><span class="dot t3"></span>Alto</span>
+        <span class="chip"><span class="dot t4"></span>Muy alto</span>
+      </div>
+
+      <div id="busLegendFloating">
+        <div class="legend-head">
+          <span class="legend-title">Líneas de buses</span>
+          <button class="legend-close" id="closeBusLegend">✕</button>
+        </div>
+      </div>
+      <button id="openBusLegend">📍 Buses</button>
+
+      <div id="overlay">
+        <div class="overlay-card">
+          <div class="overlay-title">No se pudo cargar el mapa</div>
+          <div class="overlay-text">Conéctate a internet (Leaflet, tiles y Overpass son en línea).</div>
+        </div>
+      </div>
+
+      <button id="openPanel" class="fab">⚙︎ Panel</button>
+
+      <div id="panel" class="panel">
+        <div class="panel-header">
+          <span class="title">Controles</span>
+          <button id="closePanel" class="iconbtn">Ocultar ▲</button>
+        </div>
+        <div class="row">
+          <label class="switch">
+            <span class="lbl">Base</span>
+            <input id="baseSwitch" type="checkbox" />
+            <div class="rail"><div class="knob"></div></div>
+            <span id="baseTxt" class="txt">Mapa</span>
+          </label>
+          <button id="fit" class="btn ghost">Enfocar</button>
+          <button id="loc" class="btn">Ubicarme</button>
+        </div>
+        <div class="row" id="toggles">
+          <div class="toggle active" data-layer="trafico"><span class="dot t4"></span>Tráfico</div>
+          <div class="toggle" data-layer="buses"><span class="dot bus"></span>Buses</div>
+          <div class="toggle" data-layer="ciclovias"><span class="dot cycle"></span>Ciclo-vías</div>
+          <div class="toggle" data-layer="running"><span class="dot run"></span>Running</div>
+        </div>
+        <div class="row"><span class="chip" id="estado">Activa: Tráfico</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
