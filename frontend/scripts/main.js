@@ -509,71 +509,75 @@ document.addEventListener("DOMContentLoaded", loadHome);
     ctx.clearRect(0, 0, w, h);
     ctx.save();
 
-   const yBase = h * 0.50;
+   const yBase = h * 0.52;
 
-  // Ajustes para trazos limpios
-  const ridgeW = 2.8;
-  const subW   = 2.5;
+  // Grosores para silueta tipo Chimborazo/Andes
+  const ridgeW = 2.6;
+  const subW   = 2.3;
   ctx.lineJoin = 'round';
   ctx.lineCap  = 'round';
   ctx.miterLimit = 2;
 
-  // === Trazo 1: Perfil principal de montañas (tres picos definidos)
+  // === PERFIL PRINCIPAL: Inspirado en volcanes andinos (Chimborazo, Cotopaxi)
   ctx.strokeStyle = strokes;
   ctx.lineWidth   = ridgeW;
   ctx.beginPath();
   
-  // Inicio suave desde la izquierda
-  ctx.moveTo(w*0.08, yBase + h*0.08);
+  // Inicio: base izquierda
+  ctx.moveTo(w*0.05, yBase + h*0.05);
   
-  // Primer pico (izquierda, moderado)
+  // Primera elevación: ladera volcánica suave
   ctx.bezierCurveTo(
-    w*0.16, yBase - h*0.08,
-    w*0.22, yBase - h*0.15,
-    w*0.28, yBase - h*0.12
+    w*0.12, yBase - h*0.02,
+    w*0.18, yBase - h*0.08,
+    w*0.24, yBase - h*0.10
   );
   
-  // Valle suave
+  // Cima redondeada estilo Chimborazo (cúpula glaciar)
   ctx.bezierCurveTo(
-    w*0.32, yBase - h*0.08,
-    w*0.38, yBase - h*0.04,
-    w*0.44, yBase - h*0.06
+    w*0.32, yBase - h*0.18,
+    w*0.42, yBase - h*0.22,
+    w*0.52, yBase - h*0.20
   );
   
-  // Segundo pico (centro, más alto)
+  // Descenso del glaciar
   ctx.bezierCurveTo(
-    w*0.52, yBase - h*0.20,
     w*0.58, yBase - h*0.18,
-    w*0.64, yBase - h*0.14
+    w*0.63, yBase - h*0.12,
+    w*0.68, yBase - h*0.08
   );
   
-  // Valle intermedio
+  // Valle interandino
   ctx.bezierCurveTo(
-    w*0.68, yBase - h*0.10,
-    w*0.72, yBase - h*0.08,
-    w*0.76, yBase - h*0.10
+    w*0.72, yBase - h*0.05,
+    w*0.76, yBase - h*0.04,
+    w*0.80, yBase - h*0.06
   );
   
-  // Tercer pico (derecha, elegante)
+  // Segundo pico volcánico (menor altura)
   ctx.bezierCurveTo(
-    w*0.82, yBase - h*0.14,
-    w*0.88, yBase - h*0.08,
-    w*0.94, yBase - h*0.02
+    w*0.85, yBase - h*0.12,
+    w*0.90, yBase - h*0.10,
+    w*0.95, yBase - h*0.04
   );
   
   ctx.stroke();
 
-  // === Trazo 2: Ladera interior izquierda
+  // === LADERA INTERIOR: Define estructura del volcán principal
   ctx.lineWidth = subW;
   ctx.beginPath();
-  ctx.moveTo(w*0.30, yBase - h*0.10);
-  ctx.lineTo(w*0.38, yBase - h*0.02);
+  ctx.moveTo(w*0.28, yBase - h*0.12);
+  ctx.bezierCurveTo(
+    w*0.34, yBase - h*0.08,
+    w*0.42, yBase - h*0.04,
+    w*0.50, yBase - h*0.02
+  );
   ctx.stroke();
 
-  // === Trazo 3: Ladera interior derecha
+  // === DETALLE: Cresta secundaria del segundo volcán
   ctx.beginPath();
-  ctx.moveTo(w*0.66, yBase - h*0.12);
-  ctx.lineTo(w*0.72, yBase - h*0.06);
+  ctx.moveTo(w*0.82, yBase - h*0.08);
+  ctx.lineTo(w*0.86, yBase - h*0.04);
   ctx.stroke();
 
     // ===== Texto marca (elegante) =====
