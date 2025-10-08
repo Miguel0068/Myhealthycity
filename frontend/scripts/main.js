@@ -437,3 +437,36 @@ sections.forEach(item => {
 // Carga inicial de HOME
 // (importante: esto asegura que el layout compacto siempre aparezca)
 document.addEventListener("DOMContentLoaded", loadHome);
+
+
+// === LOGO DINÁMICO SEGÚN TEMA (Light / Dark) ===
+document.addEventListener("DOMContentLoaded", () => {
+  const themeBtn = document.getElementById("theme-toggle");
+  const logoImg  = document.querySelector(".logo-icon");
+
+  function syncLogo(){
+    const isDark = document.body.classList.contains("dark-mode");
+    if (logoImg) {
+      const light = logoImg.dataset.light;
+      const dark  = logoImg.dataset.dark;
+      if (light && dark) logoImg.src = isDark ? dark : light;
+    }
+    if (themeBtn) themeBtn.textContent = isDark ? "☀️" : "🌙";
+  }
+
+  // Detecta tema del sistema al cargar (opcional)
+  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    document.body.classList.add("dark-mode");
+  }
+
+  // Botón de cambio de tema
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      syncLogo();
+    });
+  }
+
+  // Ejecuta al inicio
+  syncLogo();
+});
