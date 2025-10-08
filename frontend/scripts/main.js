@@ -257,8 +257,36 @@ sections.forEach(item => {
 
     // === 🌫️ CONTAMINACIÓN / CLIMA & AIRE (módulo aislado) ===
     if (section === "contaminacion") {
-      loadModuleIframe(MODULES.contaminacion, "Clima & Calidad del Aire");
-      return;
+     
+    function calcModuleHeight() {
+  return Math.max(520, window.innerHeight - 180); // margen para header/toolbar
+}
+
+function loadModuleIframe(src, title = "Módulo Andes City") {
+  const h = calcModuleHeight();
+  const html = `
+    <section class="welcome fade-in" style="padding:0">
+      <div class="data-card module-card">
+        <iframe
+          class="module-frame"
+          src="${src}"
+          title="${title}"
+          loading="eager"
+          style="height:${h}px"
+          allow="fullscreen"
+        ></iframe>
+      </div>
+    </section>`;
+
+  transitionContent(html, () => {
+    const frame = document.querySelector(".module-frame");
+    const setH  = () => { frame.style.height = calcModuleHeight() + "px"; };
+    setH();
+    window.addEventListener("resize", setH);
+    // sincroniza tema con el hijo
+    setTimeout(syncThemeToIframes, 50);
+  });
+}
     }
 
     // === ⚠️ INCIDENCIAS URBANAS (módulo aislado) ===
