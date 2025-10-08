@@ -5,13 +5,14 @@ const sections = document.querySelectorAll(".menu li");
 const mainContent = document.getElementById("main-content");
 
 // === Animación de transición ===
-function transitionContent(html) {
+function transitionContent(html, afterRender) {
   mainContent.classList.remove("fade-in");
   mainContent.classList.add("fade-out");
   setTimeout(() => {
     mainContent.innerHTML = html;
     mainContent.classList.remove("fade-out");
     mainContent.classList.add("fade-in");
+    if (typeof afterRender === "function") afterRender();
   }, 250);
 }
 
@@ -128,38 +129,53 @@ function attachAccordions(root=document){
 
 // === HOME (nuevo layout compacto + mapa con acordeones) ===
 async function loadHome() {
+
   ensureAccordionStyles();
 
-  transitionContent(`
-    <section class="welcome fade-in">
-      <h1 class="brand-title">
-        <span class="brand-accent">ANDES CITY</span> — inteligencia urbana local
-      </h1>
-      <p class="brand-subtitle">Predicciones, avisos y mapa activo de tu ciudad en una sola vista.</p>
+ transitionContent(`
+  <section class="welcome fade-in">
+    <h1 class="brand-title">
+      <span class="brand-accent">ANDES CITY</span> — inteligencia urbana local
+    </h1>
+    <p class="brand-subtitle">Predicciones, avisos y mapa activo de tu ciudad en una sola vista.</p>
 
-      <div class="data-card">
-        <h3>🧭 Panorama de hoy</h3>
-        <div class="cards-grid" id="ac-grid">
-          ${buildAccordion({ id:"acc-pred",   icon:"🔮", title:"Predicciones", items: HC.predicciones })}
-          ${buildAccordion({ id:"acc-avisos", icon:"📣", title:"Avisos",       items: HC.avisos })}
-          ${buildAccordion({ id:"acc-tur",    icon:"🗺️", title:"Turismo",      items: HC.turismo })}
-          ${buildAccordion({ id:"acc-aur",    icon:"💡", title:"Aurora",       items: HC.aurora })}
-        </div>
+    <div class="data-card">
+      <h3>🧭 Panorama de hoy</h3>
+      <div class="cards-grid" id="ac-grid">
+        ${buildAccordion({ id:"acc-pred",   icon:"🔮", title:"Predicciones", items: HC.predicciones })}
+        ${buildAccordion({ id:"acc-avisos", icon:"📣", title:"Avisos",       items: HC.avisos })}
+        ${buildAccordion({ id:"acc-tur",    icon:"🗺️", title:"Turismo",      items: HC.turismo })}
+        ${buildAccordion({ id:"acc-aur",    icon:"💡", title:"Aurora",       items: HC.aurora })}
       </div>
+    </div>
 
-      <div class="city-stats">
-        <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
-        <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
-        <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
-      </div>
+    <div class="city-stats">
+      <div class="stat-card">🌡️ <h4>23°C</h4><p>Temperatura actual</p></div>
+      <div class="stat-card">💨 <h4>Buena</h4><p>Calidad del aire</p></div>
+      <div class="stat-card">🚗 <h4>Fluido</h4><p>Tráfico urbano</p></div>
+    </div>
 
-      <div class="data-card">
-        <h3>🗺️ Mapa urbano</h3>
-        <p>Tu ubicación aproximada y zonas urbanas activas.</p>
-        <div id="map-preview"></div>
-      </div>
-    </section>
-  `);
+    <div class="data-card">
+      <h3>🗺️ Mapa urbano</h3>
+      <p>Tu ubicación aproximada y zonas urbanas activas.</p>
+      <div id="map-preview"></div>
+    </div>
+  </section>
+`, () => {
+  // 1) activar acordeones cuando el DOM ya está pintado
+  attachAccordions(mainContent);
+
+  // 2) inicializar mapa (con guard para no duplicar)
+  const mapEl = document.getElementById('map-preview');
+  if (mapEl && !mapEl._leaflet_id) {
+    const map = L.map(mapEl).setView([-1.664, -78.654], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker([-1.664, -78.654]).addTo(map).bindPopup("📍 Riobamba, Ecuador").openPopup();
+  }
+});
 
   // activar acordeones
   attachAccordions(mainContent);
