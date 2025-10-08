@@ -7,6 +7,62 @@
  *  - Chart.js opcional en global como `Chart` (los gráficos se omiten si no está)
  *  - Contenedores con los IDs usados abajo (map, temp-now, etc.)
  */
+
+
+
+
+// --- Normalización para este index (sin cambiar el HTML) ---
+(function bridgeIndexToApp(){
+  // Asegura clase .hidden
+  if (!document.getElementById('bridge-style')) {
+    const st = document.createElement('style');
+    st.id = 'bridge-style';
+    st.textContent = `.hidden{display:none!important}`;
+    document.head.appendChild(st);
+  }
+
+  // Mapear pestañas actuales -> data-tab que espera app.js
+  const setTab = (btnId, key) => {
+    const el = document.getElementById(btnId);
+    if (el) el.setAttribute('data-tab', key);
+  };
+  setTab('tab-overview','overview');
+  setTab('tab-clima','clima');
+  setTab('tab-aqi','calidad');   // "Calidad del aire"
+  setTab('tab-agri','agri');
+
+  // Mapear secciones actuales -> paneles que espera app.js
+  const setPanel = (srcId, key, visible) => {
+    const el = document.getElementById(srcId);
+    if (!el) return;
+    el.id = `panel-${key}`;
+    el.classList.add('tab-panel');
+    if (!visible) el.classList.add('hidden');
+    // quitar estilos display:inline para dejar que app.js controle visibilidad
+    el.style.display = '';
+  };
+  setPanel('content-overview','overview', true);
+  setPanel('content-clima','clima', false);
+  setPanel('content-aqi','calidad', false);
+  setPanel('content-agri','agri', false);
+
+  // Botón de refresco genérico que usa app.js (si no existe en tu HTML)
+  if (!document.getElementById('refresh-btn')) {
+    const anySection = document.querySelector('.section');
+    if (anySection) {
+      const btn = document.createElement('button');
+      btn.id = 'refresh-btn';
+      btn.type = 'button';
+      btn.style.display = 'none';
+      anySection.appendChild(btn);
+    }
+  }
+})();
+
+
+
+
+
 (function(){
   'use strict';
 

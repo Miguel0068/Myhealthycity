@@ -163,3 +163,20 @@ html[data-theme="dark"] .progress-bar{ background:#475569; }
     z-index:1400; border-radius:0 0 12px 12px; overflow-y:auto;
   }
 }
+
+/* que el layout pueda ocupar todo el alto disponible dentro del iframe */
+html, body { height: 100%; }
+body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+/* si usas un contenedor #app, también */
+#app { display: flex; flex-direction: column; height: 100%; }
+
+/* el mapa ocupa todo el remanente debajo del header/paneles */
+#map {
+  flex: 1;           /* ¡clave! llena el alto restante */
+  min-height: 360px; /* por si en móviles muy chicos */
+}
