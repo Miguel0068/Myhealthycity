@@ -1,283 +1,297 @@
-// ANDES CITY — módulo Incidencias (aislado por iframe)
+/* Incidencias — Andes City
+   - Mapa Leaflet con click para elegir punto (marker draggable)
+   - Form flotante con tipo/desc/foto obligatoria
+   - Guarda en localStorage y pinta en el mapa
+   - Lista con Ver/Eliminar + Borrar todo
+   - Tema oscuro/claro via postMessage (opcional)
+*/
+const $ = (s, r=document)=>r.querySelector(s);
+const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
 
-// ====== Tema (recibe tema desde la SPA y guarda preferencia) ======
-(function setupThemeListener(){
-  try {
-    const saved = localStorage.getItem("andes-theme");
-    if (saved) document.documentElement.setAttribute("data-theme", saved);
-  } catch {}
-  window.addEventListener("message", (e) => {
-    if (e?.data?.type === "set-theme") {
-      document.documentElement.setAttribute("data-theme", e.data.theme);
-      try { localStorage.setItem("andes-theme", e.data.theme); } catch {}
-    }
-  });
-})();
+const MAP_CENTER = [-1.664, -78.654]; // Riobamba aprox
+const STORAGE_KEY = "andes_incidents";
 
-// ====== Helpers ======
-const $ = (sel) => document.querySelector(sel);
-const reportBtn   = $('#reportBtn');
-const clearBtn    = $('#clearBtn');
-const viewDataBtn = $('#viewDataBtn');
-const totalCount  = $('#totalCount');
-const sectorCount = $('#sectorCount');
-const sectorList  = $('#sectorList');
+let map;
+let selectMarker = null;        // marcador de selección (para el form)
+let incidents = [];             // estado en memoria
+let markersById = new Map();    // id -> L.Marker
 
-// ====== Mapa Leaflet ======
-const map = L.map('map', { zoomControl: true }).setView([-1.6635, -78.6547], 13);
-
-const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors',
-  maxZoom: 19
-}).addTo(map);
-
-const hot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors, HOT',
-  maxZoom: 19
-});
-
-// Conmutador de capas (opcional)
-L.control.layers({ "OSM": osm, "HOT": hot }, null, { position: 'topright', collapsed: false }).addTo(map);
-
-// Ajuste tamaño al terminar de pintar
-setTimeout(()=> map.invalidateSize(), 120);
-window.addEventListener('resize', () => map.invalidateSize());
-
-// ====== Parroquias de Riobamba/Chimborazo (aprox.) ======
-const parishes = {
-  'Riobamba':     { lat: -1.6635, lng: -78.6547, radius: 0.030 },
-  'Lizarzaburu':  { lat: -1.6730, lng: -78.6470, radius: 0.008 },
-  'Velasco':      { lat: -1.6580, lng: -78.6650, radius: 0.010 },
-  'Veloz':        { lat: -1.6690, lng: -78.6380, radius: 0.008 },
-  'Yaruquíes':    { lat: -1.6280, lng: -78.6480, radius: 0.012 },
-  'Cacha':        { lat: -1.7000, lng: -78.7000, radius: 0.015 },
-  'Cubijíes':     { lat: -1.7200, lng: -78.6800, radius: 0.010 },
-  'Flores':       { lat: -1.6400, lng: -78.6300, radius: 0.010 },
-  'Licán':        { lat: -1.6380, lng: -78.6350, radius: 0.012 },
-  'Pungalá':      { lat: -1.6900, lng: -78.6200, radius: 0.010 },
-  'Punín':        { lat: -1.6300, lng: -78.6800, radius: 0.010 },
-  'Químiag':      { lat: -1.5800, lng: -78.7000, radius: 0.015 },
-  'San Juan':     { lat: -1.6500, lng: -78.6400, radius: 0.008 },
-  'San Luis':     { lat: -1.6920, lng: -78.6450, radius: 0.010 }
-};
-
-// ====== Estado ======
-let incidents = [];
-let reportMode = false;
-let incidentCounter = 1;
-const parishStats = Object.fromEntries(Object.keys(parishes).map(k => [k, 0]));
-const typeStats = { basura: 0, cierre: 0, inseguridad: 0, accidente: 0 };
-
-// ====== Tipos de reporte ======
-const reportConfig = {
-  basura:      { name: 'Basura',              icon: '🗑️', border: '#666' },
-  cierre:      { name: 'Cierre de Vías',      icon: '🚧', border: '#f59f00' },
-  inseguridad: { name: 'Inseguridad',         icon: '⚠️', border: '#d9480f' },
-  accidente:   { name: 'Accidente de Tránsito', icon: '🚨', border: '#c92a2a' }
-};
-
-// ====== Icono dinámico ======
-function makeIcon(type='basura'){
-  const conf = reportConfig[type] || reportConfig.basura;
+/* ---------- Util ---------- */
+function loadStorage(){
+  try{ incidents = JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); }
+  catch{ incidents = []; }
+}
+function saveStorage(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(incidents));
+}
+function fmtTime(ts){
+  const d = new Date(ts);
+  return d.toLocaleString();
+}
+function iconFor(type){
+  const cls = ["basura","cierre","inseguridad","otro"].includes(type) ? type : "otro";
   return L.divIcon({
-    className: 'report-icon',
-    html: `<div style="
-      background: rgba(255,255,255,.95);
-      border: 2px solid ${conf.border};
-      border-radius: 50%;
-      width: 40px; height: 40px;
-      display:flex; align-items:center; justify-content:center;
-      font-size:18px; box-shadow:0 2px 8px rgba(0,0,0,.3);
-      cursor:pointer">${conf.icon}</div>`,
-    iconSize: [40, 40], iconAnchor: [20, 40]
+    className: "incident leaflet-marker-icon",
+    html: `<span class="pin ${cls}"></span>`,
+    iconSize: [18,18],
+    iconAnchor:[9,18],
+    popupAnchor:[0,-14],
   });
 }
-
-// ====== Botón Reportar ======
-if (reportBtn){
-  reportBtn.addEventListener('click', () => {
-    reportMode = !reportMode;
-    reportBtn.classList.toggle('active', reportMode);
-    reportBtn.textContent = reportMode ? '✓ Modo Reporte Activo' : '📍 Reportar Basura';
-    map.getContainer().style.cursor = reportMode ? 'crosshair' : '';
-  });
+function setTheme(dark){
+  document.documentElement.classList.toggle("dark", !!dark);
+  document.body.classList.toggle("dark", !!dark);
 }
 
-// ====== Obtener parroquia por coordenadas ======
-function getParish(latlng){
-  for(const k in parishes){
-    const p = parishes[k];
-    const d = Math.hypot(latlng.lat - p.lat, latlng.lng - p.lng);
-    if(d <= p.radius) return k;
+/* ---------- Mapa ---------- */
+function initMap(){
+  map = L.map('map').setView(MAP_CENTER, 13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19, attribution: "© OpenStreetMap"
+  }).addTo(map);
+
+  map.on("click", (e)=>{
+    placeSelection(e.latlng);
+    openForm(e.latlng);
+  });
+
+  // Renderizar existentes
+  loadStorage();
+  incidents.forEach(addIncidentMarker);
+  renderList();
+}
+
+function placeSelection(latlng){
+  if (!selectMarker){
+    selectMarker = L.marker(latlng, {
+      draggable: true,
+      icon: L.divIcon({
+        className: "incident leaflet-marker-icon",
+        html: `<span class="pin otro"></span>`,
+        iconSize:[18,18], iconAnchor:[9,18]
+      })
+    }).addTo(map);
+    selectMarker.on("dragend", ()=>{
+      const ll = selectMarker.getLatLng();
+      fillLocation(ll);
+      validateForm();
+    });
+  } else {
+    selectMarker.setLatLng(latlng);
   }
-  return 'Área Rural';
+  map.panTo(latlng);
+  fillLocation(latlng);
 }
 
-// ====== Click en el mapa para crear reporte rápido (tipo por defecto: basura) ======
-map.on('click', (e) => {
-  if (!reportMode) return;
-  addIncident(e.latlng, 'basura', 'Reporte ciudadano de basura.', null);
-  // Desactiva modo después de un reporte
-  reportMode = false;
-  reportBtn?.classList.remove('active');
-  reportBtn && (reportBtn.textContent = '📍 Reportar Basura');
-  map.getContainer().style.cursor = '';
+/* ---------- Formulario ---------- */
+const formPanel   = $("#form-panel");
+const form        = $("#report-form");
+const inpLoc      = $("#location");
+const inpType     = $("#type");
+const inpDesc     = $("#desc");
+const inpPhoto    = $("#photo");
+const btnRemovePh = $("#remove-photo");
+const preview     = $("#preview");
+const btnSubmit   = $("#submit");
+const btnCancel   = $("#cancel");
+const btnClose    = $("#close-form");
+
+function openForm(latlng){
+  form.reset();
+  preview.innerHTML = "";
+  preview.classList.add("hidden");
+  btnRemovePh.disabled = true;
+  fillLocation(latlng);
+  validateForm();
+  formPanel.classList.remove("hidden");
+}
+
+function closeForm(){
+  formPanel.classList.add("hidden");
+  // mantenemos selectMarker para poder reabrir sin perder posición
+}
+
+function fillLocation(latlng){
+  inpLoc.value = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
+}
+
+function validateForm(){
+  const hasMarker = !!selectMarker;
+  const typeOK = !!inpType.value;
+  const descOK = inpDesc.value.trim().length > 0;
+  const photoOK = inpPhoto.files && inpPhoto.files[0];
+  btnSubmit.disabled = !(hasMarker && typeOK && descOK && photoOK);
+}
+
+/* Foto: preview y quitar */
+inpPhoto.addEventListener("change", ()=>{
+  if (inpPhoto.files && inpPhoto.files[0]){
+    const file = inpPhoto.files[0];
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      preview.innerHTML = `<img src="${reader.result}" alt="Vista previa de la foto" />`;
+      preview.classList.remove("hidden");
+    };
+    reader.readAsDataURL(file);
+    btnRemovePh.disabled = false;
+  } else {
+    preview.innerHTML = "";
+    preview.classList.add("hidden");
+    btnRemovePh.disabled = true;
+  }
+  validateForm();
+});
+btnRemovePh.addEventListener("click", ()=>{
+  inpPhoto.value = "";
+  preview.innerHTML = "";
+  preview.classList.add("hidden");
+  btnRemovePh.disabled = true;
+  validateForm();
 });
 
-// ====== Agregar incidente ======
-function addIncident(latlng, type, description, photoDataUrl){
-  const now = new Date();
-  const parish = getParish(latlng);
-  const icon = makeIcon(type);
+/* Envío */
+form.addEventListener("submit", (e)=>{
+  e.preventDefault();
+  if (btnSubmit.disabled) return;
 
-  const marker = L.marker(latlng, { icon, draggable: false }).addTo(map);
+  const ll = selectMarker.getLatLng();
+  const type = inpType.value || "otro";
+  const desc = inpDesc.value.trim();
 
-  // Botón eliminar enlaza a window.deleteIncident para funcionar dentro del popup
-  let html = `
-    <div style="min-width:220px; padding:6px 2px;">
-      <h3 style="margin:0 0 8px; color:#1a73e8; font-size:1.05rem;">
-        ${reportConfig[type]?.icon || '📍'} ${reportConfig[type]?.name || 'Reporte'}
-      </h3>
-      <p style="margin:6px 0; font-size:.9rem;"><strong>Parroquia:</strong> ${parish}</p>
-      <p style="margin:6px 0; font-size:.9rem;"><strong>Fecha:</strong> ${now.toLocaleDateString('es-ES')}</p>
-      <p style="margin:6px 0; font-size:.9rem;"><strong>Hora:</strong> ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</p>
-      <p style="margin:8px 0; font-size:.9rem;"><strong>Descripción:</strong> ${description || '—'}</p>
-  `;
-  if (photoDataUrl){
-    html += `<div style="margin:8px 0;"><img src="${photoDataUrl}" alt="Foto" style="max-width:100%;max-height:150px;border-radius:6px"/></div>`;
-  }
-  html += `
-      <button class="delete-btn" onclick="deleteIncident(${incidentCounter})">Eliminar Reporte</button>
-    </div>
-  `;
-  marker.bindPopup(html);
+  const file = inpPhoto.files[0];
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const id = Date.now();
+    const incident = {
+      id, type, desc,
+      lat: ll.lat, lng: ll.lng,
+      photo: reader.result,   // DataURL
+      ts: id
+    };
+    incidents.unshift(incident);
+    saveStorage();
 
-  const incident = {
-    id: incidentCounter++,
-    marker, latlng, parish, type,
-    date: now.toLocaleDateString('es-ES'),
-    time: now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
-    description, photo: photoDataUrl
+    addIncidentMarker(incident, true);
+    renderList();
+    closeForm();
+
+    // limpiar selección si quieres:
+    // map.removeLayer(selectMarker); selectMarker = null;
   };
-  incidents.push(incident);
-
-  // Stats
-  if (typeStats[type] != null) typeStats[type] += 1;
-  if (parishStats[parish] != null) parishStats[parish] += 1;
-
-  updateStats();
-  updateParishList();
-
-  marker.openPopup();
-}
-
-// ====== Eliminar incidente (expuesto para popup) ======
-window.deleteIncident = function(id){
-  const idx = incidents.findIndex(i => i.id === id);
-  if (idx === -1) return;
-  const inc = incidents[idx];
-
-  map.removeLayer(inc.marker);
-  if (typeStats[inc.type] != null) typeStats[inc.type] = Math.max(0, typeStats[inc.type]-1);
-  if (parishStats[inc.parish] != null) parishStats[inc.parish] = Math.max(0, parishStats[inc.parish]-1);
-
-  incidents.splice(idx, 1);
-  updateStats();
-  updateParishList();
-};
-
-// ====== Limpiar todos ======
-clearBtn?.addEventListener('click', () => {
-  if (incidents.length === 0) return;
-  if (!confirm('¿Eliminar todos los reportes?')) return;
-  incidents.forEach(i => map.removeLayer(i.marker));
-  incidents = [];
-  Object.keys(parishStats).forEach(k => parishStats[k] = 0);
-  Object.keys(typeStats).forEach(k => typeStats[k] = 0);
-  updateStats();
-  updateParishList();
+  reader.readAsDataURL(file);
 });
 
-// ====== Estadísticas ======
-function updateStats(){
-  totalCount && (totalCount.textContent = String(incidents.length));
-  const affected = Object.values(parishStats).filter(v => v > 0).length;
-  sectorCount && (sectorCount.textContent = String(affected));
+btnCancel.addEventListener("click", closeForm);
+btnClose.addEventListener("click", closeForm);
+
+/* ---------- Marcadores y lista ---------- */
+function addIncidentMarker(inc, openPopup=false){
+  // crear marcador
+  const m = L.marker([inc.lat, inc.lng], { icon: iconFor(inc.type) })
+    .addTo(map)
+    .bindPopup(popupHtml(inc));
+  if (openPopup) m.openPopup();
+
+  // guardar referencia
+  markersById.set(inc.id, m);
 }
 
-// ====== Lista de parroquias ======
-function updateParishList(){
-  if (!sectorList) return;
+function popupHtml(inc){
+  const label = labelType(inc.type);
+  return `
+    <div style="min-width:180px">
+      <div class="small-muted">${fmtTime(inc.ts)}</div>
+      <div style="margin:4px 0"><span class="badge ${inc.type}">${label}</span></div>
+      <div style="font-size:14px">${escapeHTML(inc.desc)}</div>
+      ${inc.photo ? `<div style="margin-top:6px"><img src="${inc.photo}" alt="foto" style="max-width:100%;border-radius:8px;border:1px solid var(--line)"></div>` : ""}
+      <div class="small-muted" style="margin-top:6px">${inc.lat.toFixed(5)}, ${inc.lng.toFixed(5)}</div>
+    </div>
+  `;
+}
+function labelType(t){
+  if (t==="basura") return "Basura";
+  if (t==="cierre") return "Cierre de vía";
+  if (t==="inseguridad") return "Inseguridad";
+  return "Otro";
+}
+function escapeHTML(s){
+  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
 
-  const sorted = Object.entries(parishStats)
-    .filter(([_, c]) => c > 0)
-    .sort((a,b) => b[1]-a[1]);
+function renderList(){
+  const wrap = $("#reports");
+  if (!wrap) return;
 
-  if (sorted.length === 0){
-    sectorList.innerHTML = '<div class="empty-state">No hay reportes aún</div>';
+  if (!incidents.length){
+    wrap.classList.add("empty");
+    wrap.innerHTML = `<p class="small-muted">Aún no hay reportes.</p>`;
     return;
   }
-
-  sectorList.innerHTML = sorted.map(([name, count]) => `
-    <div class="sector-item" data-sector="${name}">
-      <span class="sector-name">${name}</span>
-      <span class="sector-count">${count}</span>
+  wrap.classList.remove("empty");
+  wrap.innerHTML = incidents.map(inc => `
+    <div class="report" data-id="${inc.id}">
+      <div>
+        <div><span class="badge ${inc.type}">${labelType(inc.type)}</span></div>
+        <div class="meta">${fmtTime(inc.ts)} — ${inc.lat.toFixed(5)}, ${inc.lng.toFixed(5)}</div>
+        <div>${escapeHTML(inc.desc)}</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline js-view" title="Ver en mapa">Ver</button>
+        <button class="btn btn-outline js-del" title="Eliminar">🗑️</button>
+      </div>
     </div>
-  `).join('');
+  `).join("");
 
-  sectorList.querySelectorAll('.sector-item').forEach(it => {
-    it.addEventListener('click', () => focusParish(it.dataset.sector));
+  // eventos
+  $$(".report .js-view", wrap).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = Number(btn.closest(".report").dataset.id);
+      const m = markersById.get(id);
+      if (m){ map.setView(m.getLatLng(), 16); m.openPopup(); }
+    });
+  });
+  $$(".report .js-del", wrap).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = Number(btn.closest(".report").dataset.id);
+      deleteIncident(id);
+    });
   });
 }
 
-// ====== Foco en parroquia ======
-window.focusParish = function(name){
-  const p = parishes[name];
-  if (!p) return;
-  map.setView([p.lat, p.lng], 14);
-  // Abre popups de incidentes en la parroquia
-  incidents.filter(i => i.parish === name).forEach(i => i.marker.openPopup());
-};
-
-// ====== Ver análisis (simple por alert) ======
-viewDataBtn?.addEventListener('click', () => {
-  if (incidents.length === 0) {
-    alert('No hay datos para analizar. Agrega algunos reportes primero.');
-    return;
+function deleteIncident(id){
+  const idx = incidents.findIndex(x=>x.id===id);
+  if (idx>=0){
+    incidents.splice(idx,1);
+    saveStorage();
+    const m = markersById.get(id);
+    if (m){ map.removeLayer(m); markersById.delete(id); }
+    renderList();
   }
-  const total = incidents.length;
-  const sortedParishes = Object.entries(parishStats).filter(([_,c]) => c>0).sort((a,b)=>b[1]-a[1]);
-  const most = sortedParishes[0];
+}
 
-  const linesType = Object.entries(typeStats)
-    .filter(([_, c]) => c>0)
-    .map(([t,c]) => `• ${reportConfig[t].name}: ${c} (${((c/total)*100).toFixed(1)}%)`)
-    .join('\n');
-
-  const linesParish = sortedParishes
-    .map(([p,c]) => `• ${p}: ${c} reportes`)
-    .join('\n');
-
-  const txt =
-`📊 ANÁLISIS DE REPORTES URBANOS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total de reportes: ${total}
-Parroquias afectadas: ${sortedParishes.length}
-
-Por tipo:
-${linesType || '• —'}
-
-Parroquia más afectada:
-• ${most[0]}: ${most[1]} incidencias
-
-Listado:
-${linesParish || '• —'}
-
-Recomendaciones:
-${typeStats.inseguridad >= 3 ? '• Reforzar seguridad en zonas reportadas\n' : ''}${typeStats.basura >= 4 ? '• Incrementar rutas de recolección donde hay más basura\n' : ''}${typeStats.accidente >= 2 ? '• Revisar señalización en zonas de accidentes frecuentes\n' : ''}• Continuar el monitoreo y fomentar reportes ciudadanos`;
-  alert(txt);
+/* ---------- Borrar todo ---------- */
+$("#clear-all").addEventListener("click", ()=>{
+  if (!incidents.length) return;
+  if (!confirm("¿Eliminar todos los reportes?")) return;
+  incidents = [];
+  saveStorage();
+  markersById.forEach(m=>map.removeLayer(m));
+  markersById.clear();
+  renderList();
 });
 
-// ====== Init ======
-updateStats();
-updateParishList();
+/* ---------- Tema desde el padre (opcional) ---------- */
+window.addEventListener("message", (ev)=>{
+  if (!ev.data) return;
+  if (ev.data.type === "set-theme"){
+    setTheme(ev.data.theme === "dark");
+  }
+});
+
+/* ---------- Init ---------- */
+document.addEventListener("DOMContentLoaded", ()=>{
+  initMap();
+  // En caso el iframe cargue en modo oscuro:
+  const parentIsDark = document.body.classList.contains("dark-mode") || document.documentElement.classList.contains("dark");
+  if (parentIsDark) setTheme(true);
+});
